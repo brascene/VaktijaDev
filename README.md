@@ -62,6 +62,11 @@ Ili jednostavno otvori `VaktijaDev.xcodeproj` u Xcode-u i pokreni (⌘R).
 
 Koristi [Aladhan API](https://aladhan.com/prayer-times-api) za dohvat namaz vremena.
 
+- **Po gradu:** `GET https://api.aladhan.com/v1/timingsByCity?city=Sarajevo&country=Bosnia and Herzegovina&method=99&methodSettings=14.5,null,14.5`
+- **Po koordinatama (GPS):** `GET https://api.aladhan.com/v1/timings/{timestamp}?latitude=...&longitude=...&method=99&methodSettings=14.5,null,14.5`
+
+Koristi se prilagođena metoda (method=99) sa uglom od **14.5°** za zoru (Fajr) iaciju (Isha), što odgovara standardu koji se koristi u Bosni i Hercegovini.
+
 ## Licenca
 
 MIT — koristi slobodno.
