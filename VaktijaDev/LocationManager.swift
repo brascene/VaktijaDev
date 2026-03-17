@@ -59,7 +59,7 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
                 }
             }
 
-            group.addTask {
+            group.addTask { @MainActor in
                 await Task.sleep(seconds: 15)
                 if self.continuation != nil {
                     self.error = "Nije moguće odrediti lokaciju"
