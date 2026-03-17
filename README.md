@@ -12,6 +12,7 @@ Minimalna macOS menu bar aplikacija za praćenje vaktije (namaz vremena) u grado
 - Hidžretski i gregorijanski datum
 - Automatsko označavanje sljedećeg namaza
 - 16 gradova iz BiH
+- Opcija "Koristi moju lokaciju" — GPS za korisnike koji ne nađu svoj grad
 - Račun sa uglom od 14.5° za zoru i jaciu
 - Bez Dock ikone — živi samo u menu baru
 
@@ -46,7 +47,8 @@ Ili jednostavno otvori `VaktijaDev.xcodeproj` u Xcode-u i pokreni (⌘R).
 1. Pokreni aplikaciju — ikona mjeseca (🌙) se pojavi u menu baru
 2. Klikni na ikonu — otvori se popover sa vaktijom
 3. Odaberi grad iz padajućeg menija
-4. Klikni bilo gdje van popovera da ga zatvoriš
+4. Ili klikni na ikonu lokacije (📍) da koristiš svoju GPS poziciju
+5. Klikni bilo gdje van popovera da ga zatvoriš
 
 ## API
 
