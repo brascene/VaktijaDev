@@ -1,17 +1,13 @@
-//
-//  VaktijaDevApp.swift
-//  VaktijaDev
-//
-//  Created by Dino Pelic on 17. 3. 2026..
-//
-
 import SwiftUI
 
 @main
 struct VaktijaDevApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        // No visible window — everything is in the menu bar popover
+        Settings {
+            EmptyView()
         }
     }
 }
