@@ -2,9 +2,16 @@
 
 Minimalna macOS menu bar aplikacija za praćenje vaktije (namaz vremena) u gradovima Bosne i Hercegovine.
 
-![macOS](https://img.shields.io/badge/macOS-13%2B-blue)
+![macOS](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-5-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
+
+## Pregled
+
+<p align="center">
+  <img src="screenshots/main.png" alt="Glavni prikaz" width="300">
+  <img src="screenshots/cities.png" alt="Lista gradova" width="300">
+</p>
 
 ## Mogućnosti
 
@@ -28,7 +35,7 @@ Minimalna macOS menu bar aplikacija za praćenje vaktije (namaz vremena) u grado
 
 ### Opcija 2 — Izgradi sam iz koda
 
-Potrebno: Xcode 15+ i macOS 13+
+Potrebno: Xcode 15+ i macOS 14+
 
 ```bash
 git clone https://github.com/brascene/VaktijaDev.git
