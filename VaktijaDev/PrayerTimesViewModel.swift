@@ -28,6 +28,7 @@ final class PrayerTimesViewModel {
             URLQueryItem(name: "city", value: selectedCity.name),
             URLQueryItem(name: "country", value: selectedCity.country),
             URLQueryItem(name: "method", value: String(Config.calculationMethod)),
+            URLQueryItem(name: "methodSettings", value: Config.methodSettings),
         ]
 
         guard let url = components.url else {
