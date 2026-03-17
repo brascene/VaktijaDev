@@ -43,6 +43,11 @@ struct PrayerTimesView: View {
             await viewModel.fetchIfNeeded()
         }
         .onChange(of: viewModel.selectedCity) {
+            if !viewModel.useLocation {
+                Task { await viewModel.fetchPrayerTimes() }
+            }
+        }
+        .onChange(of: viewModel.useLocation) {
             Task { await viewModel.fetchPrayerTimes() }
         }
     }
@@ -50,13 +55,34 @@ struct PrayerTimesView: View {
     private var header: some View {
         VStack(spacing: 6) {
             HStack {
-                Picker("Grad", selection: $viewModel.selectedCity) {
-                    ForEach(CityList.all) { city in
-                        Text(city.name).tag(city)
+                if viewModel.useLocation {
+                    HStack(spacing: 4) {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                        Text(viewModel.locationManager.locationName ?? "Moja lokacija")
+                            .font(.system(size: 13, weight: .medium))
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    Picker("Grad", selection: $viewModel.selectedCity) {
+                        ForEach(CityList.all) { city in
+                            Text(city.name).tag(city)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .labelsHidden()
-                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Button {
+                    viewModel.useLocation.toggle()
+                } label: {
+                    Image(systemName: viewModel.useLocation ? "location.fill" : "location")
+                        .font(.system(size: 12))
+                        .foregroundStyle(viewModel.useLocation ? Color.accentColor : Color.secondary)
+                }
+                .buttonStyle(.borderless)
+                .help(viewModel.useLocation ? "Koristi listu gradova" : "Koristi moju lokaciju")
 
                 Button {
                     Task { await viewModel.fetchPrayerTimes() }

@@ -9,6 +9,8 @@ final class PrayerTimesViewModel {
     var isLoading = false
     var errorMessage: String?
     var nextPrayer: String?
+    var useLocation = false
+    var locationManager = LocationManager()
 
     private var lastFetchDate: String?
 
@@ -23,15 +25,41 @@ final class PrayerTimesViewModel {
         isLoading = true
         errorMessage = nil
 
-        var components = URLComponents(string: Config.apiBaseURL)!
-        components.queryItems = [
-            URLQueryItem(name: "city", value: selectedCity.name),
-            URLQueryItem(name: "country", value: selectedCity.country),
-            URLQueryItem(name: "method", value: String(Config.calculationMethod)),
-            URLQueryItem(name: "methodSettings", value: Config.methodSettings),
-        ]
+        let url: URL?
 
-        guard let url = components.url else {
+        if useLocation {
+            await locationManager.requestLocation()
+            if let error = locationManager.error {
+                errorMessage = error
+                isLoading = false
+                return
+            }
+            guard let lat = locationManager.latitude, let lon = locationManager.longitude else {
+                errorMessage = "Lokacija nije dostupna"
+                isLoading = false
+                return
+            }
+            let timestamp = Int(Date().timeIntervalSince1970)
+            var components = URLComponents(string: "\(Config.apiBaseURLByCoords)/\(timestamp)")!
+            components.queryItems = [
+                URLQueryItem(name: "latitude", value: String(lat)),
+                URLQueryItem(name: "longitude", value: String(lon)),
+                URLQueryItem(name: "method", value: String(Config.calculationMethod)),
+                URLQueryItem(name: "methodSettings", value: Config.methodSettings),
+            ]
+            url = components.url
+        } else {
+            var components = URLComponents(string: Config.apiBaseURL)!
+            components.queryItems = [
+                URLQueryItem(name: "city", value: selectedCity.name),
+                URLQueryItem(name: "country", value: selectedCity.country),
+                URLQueryItem(name: "method", value: String(Config.calculationMethod)),
+                URLQueryItem(name: "methodSettings", value: Config.methodSettings),
+            ]
+            url = components.url
+        }
+
+        guard let url else {
             errorMessage = "Neispravan URL"
             isLoading = false
             return
