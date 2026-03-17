@@ -1,4 +1,5 @@
 import CoreLocation
+import AppKit
 
 @Observable
 final class LocationManager: NSObject, CLLocationManagerDelegate {
@@ -7,6 +8,7 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
     var locationName: String?
     var isLocating = false
     var error: String?
+    var permissionDenied = false
 
     private let manager = CLLocationManager()
     private var continuation: CheckedContinuation<Void, Never>?
@@ -17,9 +19,22 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
         manager.desiredAccuracy = kCLLocationAccuracyKilometer
     }
 
+    var authorizationStatus: CLAuthorizationStatus {
+        manager.authorizationStatus
+    }
+
     func requestLocation() async {
         isLocating = true
         error = nil
+        permissionDenied = false
+
+        let status = manager.authorizationStatus
+        if status == .denied || status == .restricted {
+            permissionDenied = true
+            error = "Lokacija nije dozvoljena"
+            isLocating = false
+            return
+        }
 
         manager.requestWhenInUseAuthorization()
 
@@ -29,6 +44,12 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
         }
 
         isLocating = false
+    }
+
+    func openLocationSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -45,9 +66,25 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
 
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor in
-            self.error = "Lokacija nije dostupna"
+            if let clError = error as? CLError, clError.code == .denied {
+                self.permissionDenied = true
+                self.error = "Lokacija nije dozvoljena"
+            } else {
+                self.error = "Lokacija nije dostupna"
+            }
             self.continuation?.resume()
             self.continuation = nil
+        }
+    }
+
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        Task { @MainActor in
+            let status = manager.authorizationStatus
+            if status == .denied || status == .restricted {
+                self.permissionDenied = true
+            } else {
+                self.permissionDenied = false
+            }
         }
     }
 

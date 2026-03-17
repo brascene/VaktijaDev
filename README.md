@@ -24,6 +24,7 @@ Minimalna macOS menu bar aplikacija za praćenje vaktije (namaz vremena) u grado
 2. Preuzmi `VaktijaDev.app.zip`
 3. Raspakiraj i premjesti `VaktijaDev.app` u `/Applications`
 4. Desni klik na app → **Open** (samo prvi put, zbog Gatekeeper zaštite)
+5. Ako macOS i dalje ne dozvoljava otvaranje — idi u **System Settings → Privacy & Security**, skrolaj do dna i klikni **Open Anyway**
 
 ### Opcija 2 — Izgradi sam iz koda
 

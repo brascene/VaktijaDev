@@ -25,9 +25,18 @@ struct PrayerTimesView: View {
                 ProgressView()
                     .frame(maxWidth: .infinity, minHeight: 120)
             } else if let error = viewModel.errorMessage, viewModel.timings == nil {
-                Text(error)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 120)
+                VStack(spacing: 8) {
+                    Text(error)
+                        .foregroundStyle(.secondary)
+                    if viewModel.locationManager.permissionDenied {
+                        Button("Postavke") {
+                            viewModel.locationManager.openLocationSettings()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                    }
+                }
+                .frame(maxWidth: .infinity, minHeight: 120)
             } else if let timings = viewModel.timings {
                 prayerList(timings)
             }
