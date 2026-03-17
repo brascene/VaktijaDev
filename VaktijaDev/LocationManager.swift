@@ -1,6 +1,7 @@
 import CoreLocation
 import AppKit
 
+@MainActor
 @Observable
 final class LocationManager: NSObject, CLLocationManagerDelegate {
     var latitude: Double?
@@ -10,8 +11,8 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
     var error: String?
     var permissionDenied = false
 
-    private let manager = CLLocationManager()
-    private var continuation: CheckedContinuation<Void, Never>?
+    @ObservationIgnored private let manager = CLLocationManager()
+    @ObservationIgnored private var continuation: CheckedContinuation<Void, Never>?
 
     override init() {
         super.init()
@@ -51,8 +52,8 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
 
         // Request location with timeout
         await withTaskGroup(of: Void.self) { group in
-            group.addTask {
-                await withCheckedContinuation { continuation in
+            group.addTask { @MainActor in
+                await withCheckedContinuation { @MainActor continuation in
                     self.continuation = continuation
                     self.manager.requestLocation()
                 }
@@ -60,12 +61,10 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
 
             group.addTask {
                 await Task.sleep(seconds: 15)
-                await MainActor.run {
-                    if self.continuation != nil {
-                        self.error = "Nije moguće odrediti lokaciju"
-                        self.continuation?.resume()
-                        self.continuation = nil
-                    }
+                if self.continuation != nil {
+                    self.error = "Nije moguće odrediti lokaciju"
+                    self.continuation?.resume()
+                    self.continuation = nil
                 }
             }
 
@@ -82,36 +81,32 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
         }
     }
 
-    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.first else { return }
 
-        Task { @MainActor in
-            self.latitude = location.coordinate.latitude
-            self.longitude = location.coordinate.longitude
-            await self.reverseGeocode(location)
-            self.continuation?.resume()
-            self.continuation = nil
+        latitude = location.coordinate.latitude
+        longitude = location.coordinate.longitude
+        Task {
+            await reverseGeocode(location)
         }
+        continuation?.resume()
+        continuation = nil
     }
 
-    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        Task { @MainActor in
-            if let clError = error as? CLError, clError.code == .denied {
-                self.permissionDenied = true
-                self.error = "Lokacija nije dozvoljena"
-            } else {
-                self.error = "Nije moguće odrediti lokaciju"
-            }
-            self.continuation?.resume()
-            self.continuation = nil
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        if let clError = error as? CLError, clError.code == .denied {
+            permissionDenied = true
+            self.error = "Lokacija nije dozvoljena"
+        } else {
+            self.error = "Nije moguće odrediti lokaciju"
         }
+        continuation?.resume()
+        continuation = nil
     }
 
-    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        Task { @MainActor in
-            let status = manager.authorizationStatus
-            self.permissionDenied = (status == .denied || status == .restricted)
-        }
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let status = manager.authorizationStatus
+        permissionDenied = (status == .denied || status == .restricted)
     }
 
     private func reverseGeocode(_ location: CLLocation) async {

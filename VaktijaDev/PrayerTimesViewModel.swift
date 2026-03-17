@@ -10,9 +10,9 @@ final class PrayerTimesViewModel {
     var errorMessage: String?
     var nextPrayer: String?
     var useLocation = false
-    var locationManager = LocationManager()
+    @ObservationIgnored var locationManager = LocationManager()
 
-    private var lastFetchDate: String?
+    @ObservationIgnored private var lastFetchDate: String?
 
     init() {
         let defaultCity = CityList.all.first {
