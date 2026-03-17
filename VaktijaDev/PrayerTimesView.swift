@@ -21,22 +21,29 @@ struct PrayerTimesView: View {
 
             Divider()
 
-            if viewModel.isLoading && viewModel.timings == nil {
-                ProgressView()
-                    .frame(maxWidth: .infinity, minHeight: 120)
-            } else if let error = viewModel.errorMessage, viewModel.timings == nil {
+            if let error = viewModel.errorMessage {
                 VStack(spacing: 8) {
                     Text(error)
                         .foregroundStyle(.secondary)
-                    if viewModel.locationManager.permissionDenied {
-                        Button("Postavke") {
-                            viewModel.locationManager.openLocationSettings()
+                    HStack(spacing: 12) {
+                        if viewModel.locationManager.permissionDenied {
+                            Button("Postavke") {
+                                viewModel.locationManager.openLocationSettings()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
                         }
-                        .buttonStyle(.borderedProminent)
+                        Button("Pokušaj ponovo") {
+                            Task { await viewModel.fetchPrayerTimes() }
+                        }
+                        .buttonStyle(.bordered)
                         .controlSize(.small)
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: 120)
+            } else if viewModel.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, minHeight: 120)
             } else if let timings = viewModel.timings {
                 prayerList(timings)
             }
@@ -57,7 +64,15 @@ struct PrayerTimesView: View {
             }
         }
         .onChange(of: viewModel.useLocation) {
+            viewModel.timings = nil
+            viewModel.errorMessage = nil
             Task { await viewModel.fetchPrayerTimes() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            // Retry if location mode is active and there's an error
+            if viewModel.useLocation && viewModel.errorMessage != nil {
+                Task { await viewModel.fetchPrayerTimes() }
+            }
         }
     }
 

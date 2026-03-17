@@ -19,16 +19,16 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
         manager.desiredAccuracy = kCLLocationAccuracyKilometer
     }
 
-    var authorizationStatus: CLAuthorizationStatus {
-        manager.authorizationStatus
-    }
-
     func requestLocation() async {
         isLocating = true
         error = nil
         permissionDenied = false
+        latitude = nil
+        longitude = nil
+        locationName = nil
 
         let status = manager.authorizationStatus
+
         if status == .denied || status == .restricted {
             permissionDenied = true
             error = "Lokacija nije dozvoljena"
@@ -36,11 +36,41 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
             return
         }
 
-        manager.requestWhenInUseAuthorization()
+        if status == .notDetermined {
+            manager.requestWhenInUseAuthorization()
+            // Wait for authorization response
+            await Task.sleep(seconds: 0.5)
+            let newStatus = manager.authorizationStatus
+            if newStatus == .denied || newStatus == .restricted {
+                permissionDenied = true
+                error = "Lokacija nije dozvoljena"
+                isLocating = false
+                return
+            }
+        }
 
-        await withCheckedContinuation { continuation in
-            self.continuation = continuation
-            manager.requestLocation()
+        // Request location with timeout
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                await withCheckedContinuation { continuation in
+                    self.continuation = continuation
+                    self.manager.requestLocation()
+                }
+            }
+
+            group.addTask {
+                await Task.sleep(seconds: 15)
+                await MainActor.run {
+                    if self.continuation != nil {
+                        self.error = "Nije moguće odrediti lokaciju"
+                        self.continuation?.resume()
+                        self.continuation = nil
+                    }
+                }
+            }
+
+            await group.next()
+            group.cancelAll()
         }
 
         isLocating = false
@@ -70,7 +100,7 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
                 self.permissionDenied = true
                 self.error = "Lokacija nije dozvoljena"
             } else {
-                self.error = "Lokacija nije dostupna"
+                self.error = "Nije moguće odrediti lokaciju"
             }
             self.continuation?.resume()
             self.continuation = nil
@@ -80,11 +110,7 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         Task { @MainActor in
             let status = manager.authorizationStatus
-            if status == .denied || status == .restricted {
-                self.permissionDenied = true
-            } else {
-                self.permissionDenied = false
-            }
+            self.permissionDenied = (status == .denied || status == .restricted)
         }
     }
 
@@ -95,5 +121,11 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
         } else {
             locationName = "Moja lokacija"
         }
+    }
+}
+
+extension Task where Success == Never, Failure == Never {
+    static func sleep(seconds: Double) async {
+        try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
     }
 }
