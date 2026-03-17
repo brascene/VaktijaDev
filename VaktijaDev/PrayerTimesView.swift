@@ -34,10 +34,12 @@ struct PrayerTimesView: View {
                             .controlSize(.small)
                         }
                         Button("Pokušaj ponovo") {
+                            viewModel.errorMessage = nil
                             Task { await viewModel.fetchPrayerTimes() }
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
+                        .disabled(viewModel.isLoading)
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: 120)
