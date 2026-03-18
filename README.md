@@ -60,12 +60,12 @@ Ili jednostavno otvori `VaktijaDev.xcodeproj` u Xcode-u i pokreni (⌘R).
 
 ## API
 
-Koristi [Aladhan API](https://aladhan.com/prayer-times-api) za dohvat namaz vremena.
+Koristi [vaktija.dev API](https://vaktija.dev) kao primarni izvor namaz vremena, sa [Aladhan API](https://aladhan.com/prayer-times-api) kao rezervnim izvorom u slučaju greške.
 
-- **Po gradu:** `GET https://api.aladhan.com/v1/timingsByCity?city=Sarajevo&country=Bosnia and Herzegovina&method=99&methodSettings=14.5,null,14.5`
-- **Po koordinatama (GPS):** `GET https://api.aladhan.com/v1/timings/{timestamp}?latitude=...&longitude=...&method=99&methodSettings=14.5,null,14.5`
+- **Primarna:** `GET https://vaktija.dev/api/v1/prayers/today?lat=43.651100&lon=17.961100`
+- **Rezervna:** `GET https://api.aladhan.com/v1/timings/{timestamp}?latitude=...&longitude=...&method=99&methodSettings=14.5,null,14.5`
 
-Koristi se prilagođena metoda (method=99) sa uglom od **14.5°** za zoru (Fajr) i jaciju (Isha), što odgovara standardu koji se koristi u Bosni i Hercegovini.
+Primarni API vraća i dodatna islamska vremena: pola noći i zadnju trećinu noći. Rezervni API koristi prilagođenu metodu sa uglom od **14.5°** za sabah i jaciju.
 
 ## Licenca
 

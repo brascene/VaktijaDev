@@ -4,12 +4,12 @@ struct PrayerTimesView: View {
     @State private var viewModel = PrayerTimesViewModel()
 
     private let prayerNames: [String: String] = [
-        "Fajr": "Zora",
-        "Sunrise": "Izlazak sunca",
-        "Dhuhr": "Podne",
-        "Asr": "Ikindija",
-        "Maghrib": "Akšam",
-        "Isha": "Jacija",
+        "fajr":    "Zora",
+        "sunrise": "Izlazak sunca",
+        "dhuhr":   "Podne",
+        "asr":     "Ikindija",
+        "maghrib": "Akšam",
+        "isha":    "Jacija",
     ]
 
     var body: some View {
@@ -71,7 +71,6 @@ struct PrayerTimesView: View {
             Task { await viewModel.fetchPrayerTimes() }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            // Retry if location mode is active and there's an error
             if viewModel.useLocation && viewModel.errorMessage != nil {
                 Task { await viewModel.fetchPrayerTimes() }
             }
@@ -124,7 +123,7 @@ struct PrayerTimesView: View {
                 HStack {
                     Text(dateInfo.readable)
                     Spacer()
-                    Text("\(dateInfo.hijri.month.en) \(dateInfo.hijri.year)")
+                    Text("\(dateInfo.hijriMonth) \(dateInfo.hijriYear)")
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -132,20 +131,60 @@ struct PrayerTimesView: View {
         }
     }
 
-    private func prayerList(_ timings: Timings) -> some View {
+    private func prayerList(_ timings: PrayerTimings) -> some View {
         VStack(spacing: 0) {
-            prayerRow("Fajr", time: timings.Fajr)
+            prayerRow("fajr",    time: timings.fajr)
             Divider().padding(.horizontal, 16)
-            prayerRow("Sunrise", time: timings.Sunrise, isSecondary: true)
+            prayerRow("sunrise", time: timings.sunrise, isSecondary: true)
             Divider().padding(.horizontal, 16)
-            prayerRow("Dhuhr", time: timings.Dhuhr)
+            prayerRow("dhuhr",   time: timings.dhuhr)
             Divider().padding(.horizontal, 16)
-            prayerRow("Asr", time: timings.Asr)
+            prayerRow("asr",     time: timings.asr)
             Divider().padding(.horizontal, 16)
-            prayerRow("Maghrib", time: timings.Maghrib)
+            prayerRow("maghrib", time: timings.maghrib)
             Divider().padding(.horizontal, 16)
-            prayerRow("Isha", time: timings.Isha)
+            prayerRow("isha",    time: timings.isha)
+
+            if timings.polaNoci != nil || timings.zadnjaTrecina != nil {
+                Divider()
+                nocnaVremena(timings)
+            }
         }
+    }
+
+    private func nocnaVremena(_ timings: PrayerTimings) -> some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("Noćna vremena")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.tertiary)
+                    .textCase(.uppercase)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 6)
+            .padding(.bottom, 2)
+
+            if let polaNoci = timings.polaNoci {
+                nocnaRow("Pola noći", time: polaNoci)
+            }
+            if let zadnjaTrecina = timings.zadnjaTrecina {
+                nocnaRow("Zadnja trećina", time: zadnjaTrecina)
+            }
+        }
+    }
+
+    private func nocnaRow(_ label: String, time: String) -> some View {
+        HStack {
+            Text(label)
+            Spacer()
+            Text(time)
+                .monospacedDigit()
+        }
+        .foregroundStyle(.secondary)
+        .font(.system(size: 12))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 5)
     }
 
     private func prayerRow(_ key: String, time: String, isSecondary: Bool = false) -> some View {
