@@ -20,7 +20,7 @@ Minimalna macOS menu bar aplikacija za praćenje vaktije (namaz vremena) u grado
 - Automatsko označavanje sljedećeg namaza
 - 16 gradova iz BiH
 - Opcija "Koristi moju lokaciju" — GPS za korisnike koji ne nađu svoj grad
-- Račun sa uglom od 14.5° za zoru i jaciu
+- Račun sa uglom od 14.5° za sabah i jaciju — [zašto 14.5°?](https://github.com/brascene/VaktijaDev/wiki)
 - Bez Dock ikone — živi samo u menu baru
 
 ## Instalacija
@@ -65,7 +65,7 @@ Koristi [Aladhan API](https://aladhan.com/prayer-times-api) za dohvat namaz vrem
 - **Po gradu:** `GET https://api.aladhan.com/v1/timingsByCity?city=Sarajevo&country=Bosnia and Herzegovina&method=99&methodSettings=14.5,null,14.5`
 - **Po koordinatama (GPS):** `GET https://api.aladhan.com/v1/timings/{timestamp}?latitude=...&longitude=...&method=99&methodSettings=14.5,null,14.5`
 
-Koristi se prilagođena metoda (method=99) sa uglom od **14.5°** za zoru (Fajr) iaciju (Isha), što odgovara standardu koji se koristi u Bosni i Hercegovini.
+Koristi se prilagođena metoda (method=99) sa uglom od **14.5°** za zoru (Fajr) i jaciju (Isha), što odgovara standardu koji se koristi u Bosni i Hercegovini.
 
 ## Licenca
 
