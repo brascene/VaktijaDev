@@ -67,6 +67,10 @@ Koristi [vaktija.dev API](https://vaktija.dev) kao primarni izvor namaz vremena,
 
 Primarni API vraća i dodatna islamska vremena: pola noći i zadnju trećinu noći. Rezervni API koristi prilagođenu metodu sa uglom od **14.5°** za sabah i jaciju.
 
+## Web verzija
+
+Za korištenje u browseru posjetite [vaktija.dev](https://vaktija.dev) — web aplikacija istog tima čiji API koristimo.
+
 ## Licenca
 
 MIT — koristi slobodno.
