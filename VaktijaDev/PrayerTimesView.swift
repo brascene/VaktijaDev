@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PrayerTimesView: View {
     @State private var viewModel = PrayerTimesViewModel()
+    @State private var showingCityPicker = false
 
     private let prayerNames: [String: String] = [
         "fajr":    "Zora",
@@ -13,6 +14,33 @@ struct PrayerTimesView: View {
     ]
 
     var body: some View {
+        Group {
+            if showingCityPicker {
+                CityPickerView(selectedCity: $viewModel.selectedCity) {
+                    showingCityPicker = false
+                    Task { await viewModel.fetchPrayerTimes() }
+                }
+            } else {
+                mainView
+            }
+        }
+        .frame(width: 300)
+        .task {
+            await viewModel.fetchIfNeeded()
+        }
+        .onChange(of: viewModel.useLocation) {
+            viewModel.timings = nil
+            viewModel.errorMessage = nil
+            Task { await viewModel.fetchPrayerTimes() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            if viewModel.useLocation && viewModel.errorMessage != nil {
+                Task { await viewModel.fetchPrayerTimes() }
+            }
+        }
+    }
+
+    private var mainView: some View {
         VStack(spacing: 0) {
             header
                 .padding(.horizontal, 16)
@@ -56,25 +84,6 @@ struct PrayerTimesView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
         }
-        .frame(width: 300)
-        .task {
-            await viewModel.fetchIfNeeded()
-        }
-        .onChange(of: viewModel.selectedCity) {
-            if !viewModel.useLocation {
-                Task { await viewModel.fetchPrayerTimes() }
-            }
-        }
-        .onChange(of: viewModel.useLocation) {
-            viewModel.timings = nil
-            viewModel.errorMessage = nil
-            Task { await viewModel.fetchPrayerTimes() }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            if viewModel.useLocation && viewModel.errorMessage != nil {
-                Task { await viewModel.fetchPrayerTimes() }
-            }
-        }
     }
 
     private var header: some View {
@@ -90,12 +99,18 @@ struct PrayerTimesView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
-                    Picker("Grad", selection: $viewModel.selectedCity) {
-                        ForEach(CityList.all) { city in
-                            Text(city.name).tag(city)
+                    Button {
+                        showingCityPicker = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(viewModel.selectedCity.name)
+                                .font(.system(size: 13, weight: .medium))
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundStyle(.secondary)
                         }
                     }
-                    .labelsHidden()
+                    .buttonStyle(.borderless)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 

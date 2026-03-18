@@ -49,6 +49,24 @@ struct NamaskaVremena: Codable, Sendable {
     let zadnja_trecina: String
 }
 
+// MARK: - Vaktija.dev Locations API
+
+struct VaktijaLocationsResponse: Codable {
+    let data: VaktijaLocationsPage
+}
+
+struct VaktijaLocationsPage: Codable {
+    let data: [VaktijaLocation]
+    let last_page: Int
+}
+
+struct VaktijaLocation: Codable {
+    let id: Int
+    let name: String
+    let latitude: String
+    let longitude: String
+}
+
 // MARK: - Aladhan API models (fallback)
 
 struct AladhanResponse: Codable, Sendable {

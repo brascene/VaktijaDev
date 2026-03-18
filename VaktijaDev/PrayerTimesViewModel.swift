@@ -15,18 +15,17 @@ final class PrayerTimesViewModel {
     @ObservationIgnored private var lastFetchDate: String?
 
     init() {
-        let defaultCity = CityList.all.first {
-            $0.name == Config.defaultCity && $0.country == Config.defaultCountry
-        } ?? CityList.all[0]
-        self.selectedCity = defaultCity
+        self.selectedCity = CityList.defaultCity
     }
 
     func fetchPrayerTimes() async {
         isLoading = true
         errorMessage = nil
 
+        // Determine coordinates and optional city_id
         let lat: Double
         let lon: Double
+        let cityId: Int?
 
         if useLocation {
             await locationManager.requestLocation()
@@ -42,13 +41,15 @@ final class PrayerTimesViewModel {
             }
             lat = locLat
             lon = locLon
+            cityId = nil
         } else {
             lat = selectedCity.latitude
             lon = selectedCity.longitude
+            cityId = selectedCity.cityId
         }
 
         // Try primary API (vaktija.dev)
-        if let result = await fetchFromVaktijaDev(lat: lat, lon: lon) {
+        if let result = await fetchFromVaktijaDev(lat: lat, lon: lon, cityId: cityId) {
             timings = result.timings
             dateInfo = result.dateInfo
             lastFetchDate = todayISO()
@@ -70,12 +71,16 @@ final class PrayerTimesViewModel {
         isLoading = false
     }
 
-    private func fetchFromVaktijaDev(lat: Double, lon: Double) async -> (timings: PrayerTimings, dateInfo: PrayerDateInfo)? {
+    private func fetchFromVaktijaDev(lat: Double, lon: Double, cityId: Int?) async -> (timings: PrayerTimings, dateInfo: PrayerDateInfo)? {
         var components = URLComponents(string: Config.vaktijaDevBaseURL)!
-        components.queryItems = [
-            URLQueryItem(name: "lat", value: String(format: "%.6f", lat)),
-            URLQueryItem(name: "lon", value: String(format: "%.6f", lon)),
-        ]
+        if let cityId {
+            components.queryItems = [URLQueryItem(name: "city_id", value: String(cityId))]
+        } else {
+            components.queryItems = [
+                URLQueryItem(name: "lat", value: String(format: "%.6f", lat)),
+                URLQueryItem(name: "lon", value: String(format: "%.6f", lon)),
+            ]
+        }
         guard let url = components.url else { return nil }
 
         do {
