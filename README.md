@@ -9,7 +9,7 @@ Minimalna macOS menu bar aplikacija za praćenje vaktije (namaz vremena) u grado
 ## Pregled
 
 <p align="center">
-  <video src="screenshots/demo.mov" autoplay loop muted playsinline width="600"></video>
+  <video src="https://github.com/user-attachments/assets/41aed689-08f2-4214-a7c9-c624da815f56" autoplay loop muted playsinline width="600"></video>
 </p>
 
 ## Mogućnosti
