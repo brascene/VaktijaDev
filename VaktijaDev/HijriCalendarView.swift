@@ -24,7 +24,7 @@ struct HijriCalendarView: View {
                     .frame(maxWidth: .infinity, minHeight: 200)
             } else {
                 calendarGrid
-                    .padding(.horizontal, 14)
+                    .padding(.horizontal, 6)
                     .padding(.vertical, 10)
 
                 Divider()
@@ -79,22 +79,22 @@ struct HijriCalendarView: View {
     }
 
     private var calendarGrid: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 4) {
             // Day name headers
-            LazyVGrid(columns: columns, spacing: 2) {
+            LazyVGrid(columns: columns, spacing: 0) {
                 ForEach(dayNames, id: \.self) { name in
                     Text(name)
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 20)
+                        .frame(height: 24)
                 }
             }
 
             // Day cells
-            LazyVGrid(columns: columns, spacing: 4) {
+            LazyVGrid(columns: columns, spacing: 6) {
                 ForEach(0..<calendarVM.startOffset, id: \.self) { _ in
-                    Color.clear.frame(height: 42)
+                    Color.clear.frame(height: 46)
                 }
                 ForEach(calendarVM.days) { day in
                     dayCell(day)
@@ -114,13 +114,13 @@ struct HijriCalendarView: View {
         } label: {
             VStack(spacing: 2) {
                 Text(gregDay)
-                    .font(.system(size: 13, weight: isToday ? .bold : .regular))
+                    .font(.system(size: 14, weight: isToday ? .bold : .regular))
                 Text(hijriDay)
                     .font(.system(size: 10))
                     .foregroundStyle(isToday || isSelected ? .white.opacity(0.8) : .secondary)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 42)
+            .frame(height: 46)
             .background {
                 if isToday {
                     RoundedRectangle(cornerRadius: 6)
