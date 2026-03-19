@@ -9,8 +9,7 @@ Minimalna macOS menu bar aplikacija za praćenje vaktije (namaz vremena) u grado
 ## Pregled
 
 <p align="center">
-  <img src="screenshots/main.png" alt="Glavni prikaz" width="300">
-  <img src="screenshots/cities.png" alt="Lista gradova" width="300">
+  <video src="screenshots/demo.mov" autoplay loop muted playsinline width="600"></video>
 </p>
 
 ## Mogućnosti
