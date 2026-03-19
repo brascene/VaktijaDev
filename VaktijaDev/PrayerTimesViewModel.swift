@@ -54,6 +54,7 @@ final class PrayerTimesViewModel {
             dateInfo = result.dateInfo
             lastFetchDate = todayISO()
             updateNextPrayer()
+            NotificationManager.shared.scheduleIfEnabled(timings: result.timings)
             isLoading = false
             return
         }
@@ -64,6 +65,7 @@ final class PrayerTimesViewModel {
             dateInfo = result.dateInfo
             lastFetchDate = todayISO()
             updateNextPrayer()
+            NotificationManager.shared.scheduleIfEnabled(timings: result.timings)
         } else {
             errorMessage = "Greška pri učitavanju vaktije"
         }

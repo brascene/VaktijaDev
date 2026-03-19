@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PrayerTimesView: View {
-    @State private var viewModel = PrayerTimesViewModel()
+    @Bindable var viewModel: PrayerTimesViewModel
     @State private var showingCityPicker = false
 
     private let prayerNames: [String: String] = [
@@ -246,5 +246,5 @@ struct PrayerTimesView: View {
 }
 
 #Preview {
-    PrayerTimesView()
+    PrayerTimesView(viewModel: PrayerTimesViewModel())
 }

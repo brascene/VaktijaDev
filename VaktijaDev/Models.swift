@@ -34,6 +34,8 @@ struct VaktijaData: Codable, Sendable {
 }
 
 struct VaktijaHijri: Codable, Sendable {
+    let date: String
+    let formatted: String
     let month: String
     let year: Int
 }
@@ -47,6 +49,28 @@ struct NamaskaVremena: Codable, Sendable {
     let jacija: String
     let pola_noci: String
     let zadnja_trecina: String
+}
+
+// MARK: - Vaktija.dev Monthly API
+
+struct VaktijaMonthlyResponse: Codable {
+    let success: Bool
+    let data: VaktijaMonthlyData
+}
+
+struct VaktijaMonthlyData: Codable {
+    let month: String
+    let year: String
+    let days: [VaktijaDayData]
+}
+
+struct VaktijaDayData: Codable, Identifiable {
+    let date: String
+    let date_formatted: String
+    let day_name: String
+    let hijri: VaktijaHijri
+    let namaska_vremena: NamaskaVremena
+    var id: String { date }
 }
 
 // MARK: - Vaktija.dev Locations API
