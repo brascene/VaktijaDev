@@ -14,13 +14,12 @@ struct ContentView: View {
 
     private var sidebar: some View {
         VStack(spacing: 4) {
-            Spacer()
             tabButton(icon: "moon.stars.fill", tab: 0)
             tabButton(icon: "calendar",        tab: 1)
             tabButton(icon: "gearshape",       tab: 2)
-            Spacer()
         }
         .frame(width: 44)
+        .frame(maxHeight: .infinity)
         .background(Color(NSColor.windowBackgroundColor).opacity(0.4))
     }
 
