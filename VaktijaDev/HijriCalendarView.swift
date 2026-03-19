@@ -45,6 +45,7 @@ struct HijriCalendarView: View {
         .onChange(of: calendarVM.displayYear) {
             Task { await calendarVM.fetch(cityId: prayerViewModel.selectedCity.cityId) }
         }
+        .frame(width: 300)
     }
 
     private var header: some View {
