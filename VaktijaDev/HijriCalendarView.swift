@@ -5,7 +5,7 @@ struct HijriCalendarView: View {
     @State private var calendarVM = HijriCalendarViewModel()
 
     private let dayNames = ["Po", "Ut", "Sr", "Če", "Pe", "Su", "Ne"]
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,8 +24,8 @@ struct HijriCalendarView: View {
                     .frame(maxWidth: .infinity, minHeight: 200)
             } else {
                 calendarGrid
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
 
                 Divider()
 
@@ -92,9 +92,9 @@ struct HijriCalendarView: View {
             }
 
             // Day cells
-            LazyVGrid(columns: columns, spacing: 2) {
+            LazyVGrid(columns: columns, spacing: 4) {
                 ForEach(0..<calendarVM.startOffset, id: \.self) { _ in
-                    Color.clear.frame(height: 36)
+                    Color.clear.frame(height: 42)
                 }
                 ForEach(calendarVM.days) { day in
                     dayCell(day)
@@ -112,15 +112,15 @@ struct HijriCalendarView: View {
         return Button {
             calendarVM.selectedDate = day.date
         } label: {
-            VStack(spacing: 1) {
+            VStack(spacing: 2) {
                 Text(gregDay)
-                    .font(.system(size: 12, weight: isToday ? .bold : .regular))
+                    .font(.system(size: 13, weight: isToday ? .bold : .regular))
                 Text(hijriDay)
-                    .font(.system(size: 9))
+                    .font(.system(size: 10))
                     .foregroundStyle(isToday || isSelected ? .white.opacity(0.8) : .secondary)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 36)
+            .frame(height: 42)
             .background {
                 if isToday {
                     RoundedRectangle(cornerRadius: 6)
