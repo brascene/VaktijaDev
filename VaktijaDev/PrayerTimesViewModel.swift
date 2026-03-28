@@ -9,10 +9,12 @@ final class PrayerTimesViewModel {
     var isLoading = false
     var errorMessage: String?
     var nextPrayer: String?
+    var timeUntilNextPrayer: String?
     var useLocation = false
     @ObservationIgnored var locationManager = LocationManager()
 
     @ObservationIgnored private var lastFetchDate: String?
+    @ObservationIgnored private var countdownTimer: Timer?
 
     init() {
         self.selectedCity = CityList.defaultCity
@@ -54,6 +56,7 @@ final class PrayerTimesViewModel {
             dateInfo = result.dateInfo
             lastFetchDate = todayISO()
             updateNextPrayer()
+            startCountdownTimer()
             NotificationManager.shared.scheduleIfEnabled(timings: result.timings)
             isLoading = false
             return
@@ -65,6 +68,7 @@ final class PrayerTimesViewModel {
             dateInfo = result.dateInfo
             lastFetchDate = todayISO()
             updateNextPrayer()
+            startCountdownTimer()
             NotificationManager.shared.scheduleIfEnabled(timings: result.timings)
         } else {
             errorMessage = "Greška pri učitavanju vaktije"
@@ -152,6 +156,7 @@ final class PrayerTimesViewModel {
             await fetchPrayerTimes()
         } else {
             updateNextPrayer()
+            startCountdownTimer()
         }
     }
 
@@ -173,13 +178,97 @@ final class PrayerTimesViewModel {
         formatter.dateFormat = "HH:mm"
         let now = formatter.string(from: Date())
 
-        nextPrayer = nil
         for (name, time) in prayerOrder {
             let cleanTime = time.components(separatedBy: " ").first ?? time
             if cleanTime > now {
                 nextPrayer = name
                 return
             }
+        }
+        // Nakon jacije, sljedeći namaz je sutrašnja zora
+        nextPrayer = "fajr"
+    }
+
+    private func startCountdownTimer() {
+        stopCountdownTimer()
+        let timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.tickCountdown()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        countdownTimer = timer
+        tickCountdown()
+    }
+
+    private func stopCountdownTimer() {
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+    }
+
+    private func tickCountdown() {
+        updateNextPrayer()
+        updateCountdownString()
+    }
+
+    private func updateCountdownString() {
+        guard let nextPrayer, let timings else {
+            timeUntilNextPrayer = nil
+            return
+        }
+
+        let prayerTimeMap: [String: String] = [
+            "fajr": timings.fajr,
+            "dhuhr": timings.dhuhr,
+            "asr": timings.asr,
+            "maghrib": timings.maghrib,
+            "isha": timings.isha,
+        ]
+
+        guard let timeStr = prayerTimeMap[nextPrayer] else {
+            timeUntilNextPrayer = nil
+            return
+        }
+
+        let cleanTime = timeStr.components(separatedBy: " ").first ?? timeStr
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        guard let parsedTime = formatter.date(from: cleanTime) else {
+            timeUntilNextPrayer = nil
+            return
+        }
+
+        let now = Date()
+        let calendar = Calendar.current
+        var comps = calendar.dateComponents([.year, .month, .day], from: now)
+        let timeComps = calendar.dateComponents([.hour, .minute], from: parsedTime)
+        comps.hour = timeComps.hour
+        comps.minute = timeComps.minute
+        comps.second = 0
+
+        guard var targetDate = calendar.date(from: comps) else {
+            timeUntilNextPrayer = nil
+            return
+        }
+
+        // Ako je namaz već prošao danas (npr. zora = sutrašnji), prebaci na sutra
+        if targetDate <= now {
+            targetDate = calendar.date(byAdding: .day, value: 1, to: targetDate)!
+        }
+
+        let interval = targetDate.timeIntervalSince(now)
+        guard interval > 0 else {
+            timeUntilNextPrayer = nil
+            return
+        }
+
+        let totalSeconds = Int(interval)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let seconds = totalSeconds % 60
+
+        if hours >= 1 {
+            timeUntilNextPrayer = "\(hours)h \(minutes)m"
+        } else {
+            timeUntilNextPrayer = String(format: "%dm %02ds", minutes, seconds)
         }
     }
 

@@ -216,6 +216,12 @@ struct PrayerTimesView: View {
                 }
                 Text(displayName)
                     .fontWeight(isNext ? .semibold : .regular)
+                if isNext, let countdown = viewModel.timeUntilNextPrayer {
+                    Text(countdown)
+                        .font(.system(size: 11, weight: .regular))
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
             }
             Spacer()
             Text(cleanTime)
