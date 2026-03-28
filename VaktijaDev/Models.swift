@@ -1,5 +1,74 @@
 import Foundation
 
+// MARK: - Hijri month names
+
+enum HijriMonths {
+    private static let bs: [String: String] = [
+        "Muharram":           "Muharrem",
+        "Safar":              "Safer",
+        "Rabi al-Awwal":      "Rebi'ul-evvel",
+        "Rabi' al-Awwal":     "Rebi'ul-evvel",
+        "Rabi' I":            "Rebi'ul-evvel",
+        "Rabi al-Thani":      "Rebi'ul-ahir",
+        "Rabi' al-Thani":     "Rebi'ul-ahir",
+        "Rabi' II":           "Rebi'ul-ahir",
+        "Jumada al-Ula":      "Džumadel-ula",
+        "Jumada al-Awwal":    "Džumadel-ula",
+        "Jumada I":           "Džumadel-ula",
+        "Jumada al-Akhirah":  "Džumadel-uhra",
+        "Jumada al-Thani":    "Džumadel-uhra",
+        "Jumada II":          "Džumadel-uhra",
+        "Rajab":              "Redžeb",
+        "Sha'ban":            "Ša'ban",
+        "Shaban":             "Ša'ban",
+        "Ramadan":            "Ramazan",
+        "Shawwal":            "Ševval",
+        "Dhu al-Qi'dah":      "Zul-ka'de",
+        "Dhu al-Qadah":       "Zul-ka'de",
+        "Dhu al-Hijjah":      "Zul-hidždže",
+        "Dhu al-Hijja":       "Zul-hidždže",
+    ]
+
+    private static let de: [String: String] = [
+        "Muharram":           "Muharram",
+        "Safar":              "Safar",
+        "Rabi al-Awwal":      "Rabi' al-Awwal",
+        "Rabi' al-Awwal":     "Rabi' al-Awwal",
+        "Rabi' I":            "Rabi' al-Awwal",
+        "Rabi al-Thani":      "Rabi' ath-Thani",
+        "Rabi' al-Thani":     "Rabi' ath-Thani",
+        "Rabi' II":           "Rabi' ath-Thani",
+        "Jumada al-Ula":      "Dschumada al-Ula",
+        "Jumada al-Awwal":    "Dschumada al-Ula",
+        "Jumada I":           "Dschumada al-Ula",
+        "Jumada al-Akhirah":  "Dschumada al-Achira",
+        "Jumada al-Thani":    "Dschumada al-Achira",
+        "Jumada II":          "Dschumada al-Achira",
+        "Rajab":              "Radschab",
+        "Sha'ban":            "Scha'ban",
+        "Shaban":             "Scha'ban",
+        "Ramadan":            "Ramadan",
+        "Shawwal":            "Schawwal",
+        "Dhu al-Qi'dah":      "Dhu l-Qi'da",
+        "Dhu al-Qadah":       "Dhu l-Qi'da",
+        "Dhu al-Hijjah":      "Dhu l-Hidscha",
+        "Dhu al-Hijja":       "Dhu l-Hidscha",
+    ]
+
+    static func localized(_ english: String, lang: String) -> String {
+        switch lang {
+        case "bs": return bs[english] ?? english
+        case "de": return de[english] ?? english
+        default:   return english
+        }
+    }
+
+    // kept for backwards compatibility
+    static func bosnian(_ english: String) -> String {
+        localized(english, lang: "bs")
+    }
+}
+
 // MARK: - Unified model used by UI
 
 struct PrayerTimings: Sendable {

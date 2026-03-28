@@ -49,7 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             var message: ReminderMessage? = nil
             if let prev = notification.userInfo?["expiringPrev"] as? String,
                let next = notification.userInfo?["expiringNext"] as? String {
-                message = ReminderMessages.expiring(prev: prev, next: next)
+                message = ReminderMessages.expiring(prevKey: prev, nextKey: next)
             }
 
             PrayerReminderPanel.show(prayer: prayer, subtitle: subtitle, message: message, buttonFrame: buttonFrame, screen: screen)

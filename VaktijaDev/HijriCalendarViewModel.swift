@@ -73,7 +73,7 @@ final class HijriCalendarViewModel {
         return weekday == 1 ? 6 : weekday - 2 // Mon=0 .. Sun=6
     }
 
-    var monthYearLabel: String {
+    func monthYearLabel(lang: String = "bs") -> String {
         var comps = DateComponents()
         comps.month = displayMonth
         comps.year = displayYear
@@ -81,13 +81,20 @@ final class HijriCalendarViewModel {
         let date = Calendar.current.date(from: comps) ?? Date()
         let formatter = DateFormatter()
         formatter.dateFormat = "LLLL yyyy"
-        formatter.locale = Locale(identifier: "bs")
+        formatter.locale = Locale(identifier: lang == "en" ? "en" : lang == "de" ? "de" : "bs")
         return formatter.string(from: date).capitalized
     }
 
-    var hijriMonthLabel: String? {
-        // Show hijri month of the majority of days in this month
-        days.first?.hijri.month
+    func hijriMonthLabel(lang: String = "bs") -> String? {
+        guard !days.isEmpty else { return nil }
+        // Ako je danas u ovom månescu, prikaži hidžretski månesc za danas
+        if let today = days.first(where: { $0.date == todayISO }) {
+            return HijriMonths.localized(today.hijri.month, lang: lang)
+        }
+        // Inače prikaži månesc koji se pojavljuje najviše dana
+        let counts = Dictionary(grouping: days, by: { $0.hijri.month }).mapValues { $0.count }
+        guard let majority = counts.max(by: { $0.value < $1.value })?.key else { return nil }
+        return HijriMonths.localized(majority, lang: lang)
     }
 
     var todayISO: String {

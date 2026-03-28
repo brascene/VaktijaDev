@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @State private var selectedTab = 0
     var prayerVM: PrayerTimesViewModel
+    @AppStorage("appLanguage") private var language = "bs"
 
     var body: some View {
         HStack(spacing: 0) {
@@ -10,6 +11,7 @@ struct ContentView: View {
             Divider()
             tabContent
         }
+        .environment(\.appLanguage, language)
     }
 
     private var sidebar: some View {

@@ -3,6 +3,7 @@ import SwiftUI
 struct CityPickerView: View {
     @Binding var selectedCity: City
     let onDismiss: () -> Void
+    @Environment(\.appLanguage) private var lang
 
     @State private var selectedCountry = "Bosna i Hercegovina"
     @State private var cities: [City] = CityList.bih
@@ -16,7 +17,7 @@ struct CityPickerView: View {
 
             Divider()
 
-            Picker("Država", selection: $selectedCountry) {
+            Picker(loc("city.country", lang), selection: $selectedCountry) {
                 ForEach(CountryList.all, id: \.self) { country in
                     Text(country).tag(country)
                 }
@@ -57,13 +58,13 @@ struct CityPickerView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 12, weight: .medium))
-                    Text("Nazad")
+                    Text(loc("city.back", lang))
                         .font(.system(size: 13))
                 }
             }
             .buttonStyle(.borderless)
             Spacer()
-            Text("Odaberi grad")
+            Text(loc("city.title", lang))
                 .font(.system(size: 13, weight: .medium))
             Spacer()
         }

@@ -3,9 +3,14 @@ import SwiftUI
 struct HijriCalendarView: View {
     var prayerViewModel: PrayerTimesViewModel
     @State private var calendarVM = HijriCalendarViewModel()
+    @Environment(\.appLanguage) private var lang
 
-    private let dayNames = ["Po", "Ut", "Sr", "Če", "Pe", "Su", "Ne"]
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
+
+    private var dayNames: [String] {
+        ["cal.day.mon", "cal.day.tue", "cal.day.wed", "cal.day.thu", "cal.day.fri", "cal.day.sat", "cal.day.sun"]
+            .map { loc($0, lang) }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -19,7 +24,7 @@ struct HijriCalendarView: View {
                 ProgressView()
                     .frame(maxWidth: .infinity, minHeight: 200)
             } else if calendarVM.days.isEmpty {
-                Text("Odaberi grad za prikaz kalendara")
+                Text(loc("cal.empty", lang))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 200)
             } else {
@@ -59,7 +64,7 @@ struct HijriCalendarView: View {
 
                 Spacer()
 
-                Text(calendarVM.monthYearLabel)
+                Text(calendarVM.monthYearLabel(lang: lang))
                     .font(.system(size: 13, weight: .semibold))
 
                 Spacer()
@@ -71,7 +76,7 @@ struct HijriCalendarView: View {
                 .buttonStyle(.borderless)
             }
 
-            if let hijriMonth = calendarVM.hijriMonthLabel {
+            if let hijriMonth = calendarVM.hijriMonthLabel(lang: lang) {
                 Text(hijriMonth)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -145,7 +150,7 @@ struct HijriCalendarView: View {
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text(day.hijri.formatted)
+                    Text(day.hijri.formatted.replacingOccurrences(of: day.hijri.month, with: HijriMonths.localized(day.hijri.month, lang: lang)))
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
@@ -154,19 +159,19 @@ struct HijriCalendarView: View {
                 .padding(.bottom, 4)
 
                 let v = day.namaska_vremena
-                let prayers: [(String, String)] = [
-                    ("Zora", v.zora),
-                    ("Izlazak", v.izlazak),
-                    ("Podne", v.podne),
-                    ("Ikindija", v.ikindija),
-                    ("Akšam", v.aksam),
-                    ("Jacija", v.jacija),
+                let prayers: [(String, String, String)] = [
+                    ("fajr",    loc("prayer.short.fajr",    lang), v.zora),
+                    ("sunrise", loc("prayer.short.sunrise", lang), v.izlazak),
+                    ("dhuhr",   loc("prayer.short.dhuhr",   lang), v.podne),
+                    ("asr",     loc("prayer.short.asr",     lang), v.ikindija),
+                    ("maghrib", loc("prayer.short.maghrib", lang), v.aksam),
+                    ("isha",    loc("prayer.short.isha",    lang), v.jacija),
                 ]
-                ForEach(prayers, id: \.0) { name, time in
+                ForEach(prayers, id: \.0) { key, name, time in
                     HStack {
-                        Text(name).foregroundStyle(name == "Izlazak" ? .secondary : .primary)
+                        Text(name).foregroundStyle(key == "sunrise" ? .secondary : .primary)
                         Spacer()
-                        Text(time).monospacedDigit().foregroundStyle(name == "Izlazak" ? .secondary : .primary)
+                        Text(time).monospacedDigit().foregroundStyle(key == "sunrise" ? .secondary : .primary)
                     }
                     .font(.system(size: 12))
                     .padding(.horizontal, 16)

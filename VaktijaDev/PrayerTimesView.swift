@@ -3,15 +3,11 @@ import SwiftUI
 struct PrayerTimesView: View {
     @Bindable var viewModel: PrayerTimesViewModel
     @State private var showingCityPicker = false
+    @Environment(\.appLanguage) private var lang
 
-    private let prayerNames: [String: String] = [
-        "fajr":    "Zora",
-        "sunrise": "Izlazak sunca",
-        "dhuhr":   "Podne",
-        "asr":     "Ikindija",
-        "maghrib": "Akšam",
-        "isha":    "Jacija",
-    ]
+    private func prayerName(_ key: String) -> String {
+        loc("prayer.\(key)", lang)
+    }
 
     var body: some View {
         Group {
@@ -55,13 +51,13 @@ struct PrayerTimesView: View {
                         .foregroundStyle(.secondary)
                     HStack(spacing: 12) {
                         if viewModel.locationManager.permissionDenied {
-                            Button("Postavke") {
+                            Button(loc("btn.openSettings", lang)) {
                                 viewModel.locationManager.openLocationSettings()
                             }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.small)
                         }
-                        Button("Pokušaj ponovo") {
+                        Button(loc("btn.tryAgain", lang)) {
                             viewModel.errorMessage = nil
                             Task { await viewModel.fetchPrayerTimes() }
                         }
@@ -94,7 +90,7 @@ struct PrayerTimesView: View {
                         Image(systemName: "location.fill")
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
-                        Text(viewModel.locationManager.locationName ?? "Moja lokacija")
+                        Text(viewModel.locationManager.locationName ?? loc("location.mine", lang))
                             .font(.system(size: 13, weight: .medium))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -122,7 +118,7 @@ struct PrayerTimesView: View {
                         .foregroundStyle(viewModel.useLocation ? Color.accentColor : Color.secondary)
                 }
                 .buttonStyle(.borderless)
-                .help(viewModel.useLocation ? "Koristi listu gradova" : "Koristi moju lokaciju")
+                .help(viewModel.useLocation ? loc("location.useCity", lang) : loc("location.useMine", lang))
 
                 Button {
                     Task { await viewModel.fetchPrayerTimes() }
@@ -138,7 +134,7 @@ struct PrayerTimesView: View {
                 HStack {
                     Text(dateInfo.readable)
                     Spacer()
-                    Text("\(dateInfo.hijriMonth) \(dateInfo.hijriYear)")
+                    Text("\(HijriMonths.localized(dateInfo.hijriMonth, lang: lang)) \(dateInfo.hijriYear)")
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -170,7 +166,7 @@ struct PrayerTimesView: View {
     private func nocnaVremena(_ timings: PrayerTimings) -> some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Noćna vremena")
+                Text(loc("night.section", lang))
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.tertiary)
                     .textCase(.uppercase)
@@ -181,10 +177,10 @@ struct PrayerTimesView: View {
             .padding(.bottom, 2)
 
             if let polaNoci = timings.polaNoci {
-                nocnaRow("Pola noći", time: polaNoci)
+                nocnaRow(loc("night.midnight", lang), time: polaNoci)
             }
             if let zadnjaTrecina = timings.zadnjaTrecina {
-                nocnaRow("Zadnja trećina", time: zadnjaTrecina)
+                nocnaRow(loc("night.lastThird", lang), time: zadnjaTrecina)
             }
         }
     }
@@ -205,7 +201,7 @@ struct PrayerTimesView: View {
     private func prayerRow(_ key: String, time: String, isSecondary: Bool = false) -> some View {
         let cleanTime = time.components(separatedBy: " ").first ?? time
         let isNext = viewModel.nextPrayer == key
-        let displayName = prayerNames[key] ?? key
+        let displayName = prayerName(key)
 
         return HStack {
             HStack(spacing: 6) {
@@ -242,7 +238,7 @@ struct PrayerTimesView: View {
                     .controlSize(.small)
             }
             Spacer()
-            Button("Zatvori") {
+            Button(loc("btn.close", lang)) {
                 NSApplication.shared.terminate(nil)
             }
             .buttonStyle(.borderless)

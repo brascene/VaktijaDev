@@ -38,7 +38,8 @@ final class PrayerTimesViewModel {
                 return
             }
             guard let locLat = locationManager.latitude, let locLon = locationManager.longitude else {
-                errorMessage = "Lokacija nije dostupna"
+                let lang = UserDefaults.standard.string(forKey: "appLanguage") ?? "bs"
+                errorMessage = loc("location.unavailable", lang)
                 isLoading = false
                 return
             }
@@ -72,7 +73,8 @@ final class PrayerTimesViewModel {
             startCountdownTimer()
             NotificationManager.shared.scheduleIfEnabled(timings: result.timings)
         } else {
-            errorMessage = "Greška pri učitavanju vaktije"
+            let lang = UserDefaults.standard.string(forKey: "appLanguage") ?? "bs"
+            errorMessage = loc("error.fetch", lang)
         }
 
         isLoading = false
@@ -273,7 +275,7 @@ final class PrayerTimesViewModel {
             timeUntilNextPrayer = String(format: "%dm %02ds", minutes, seconds)
         }
 
-        // 30 minuta prije — upozori da prethodni namaz još nije klanjan
+        // 30 minuta prije — uvijek uključeno, upozori da prethodni namaz još nije klanjan
         let expiringMap: [String: (prev: String, prevDisplay: String, nextDisplay: String)] = [
             "dhuhr":   (prev: "fajr",    prevDisplay: "Zora",     nextDisplay: "Podne"),
             "asr":     (prev: "dhuhr",   prevDisplay: "Podne",    nextDisplay: "Ikindija"),
@@ -298,7 +300,8 @@ final class PrayerTimesViewModel {
 
         // Pokreni panel reminder kad padne na 10 minuta (jednom po namazu)
         let reminderKey = "\(nextPrayer)_\(todayISO())"
-        if totalSeconds <= 600 && reminderFiredKeys.insert(reminderKey).inserted {
+        let reminders10MinEnabled = UserDefaults.standard.object(forKey: "reminders10MinEnabled") as? Bool ?? true
+        if reminders10MinEnabled && totalSeconds <= 600 && reminderFiredKeys.insert(reminderKey).inserted {
             NotificationCenter.default.post(
                 name: .prayerReminderDue,
                 object: nil,
@@ -313,6 +316,7 @@ final class PrayerTimesViewModel {
 
     private func checkSpecialReminders() {
         guard let timings else { return }
+        guard UserDefaults.standard.object(forKey: "remindersSpecialEnabled") as? Bool ?? true else { return }
 
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"

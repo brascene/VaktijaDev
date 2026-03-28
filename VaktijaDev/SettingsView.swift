@@ -10,16 +10,33 @@ struct SettingsView: View {
     @AppStorage("prayerEnabled_maghrib") private var maghribEnabled = true
     @AppStorage("prayerEnabled_isha")    private var ishaEnabled    = true
     @AppStorage("launchAtLogin")         private var launchAtLogin  = false
+    @AppStorage("reminders10MinEnabled")     private var reminders10MinEnabled     = true
+    @AppStorage("remindersSpecialEnabled")   private var remindersSpecialEnabled   = true
+    @AppStorage("appLanguage")           private var language = "bs"
 
     @State private var permissionDenied = false
+    @State private var showLockedInfo = false
+    @Environment(\.appLanguage) private var lang
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
 
-                sectionHeader("Notifikacije")
+                sectionHeader(loc("s.language", lang))
 
-                Toggle("Uključi notifikacije za namaze", isOn: $notificationsEnabled)
+                HStack(spacing: 8) {
+                    languageButton(code: "bs", flag: "🇧🇦", name: "Bosanski")
+                    languageButton(code: "en", flag: "🇬🇧", name: "English")
+                    languageButton(code: "de", flag: "🇩🇪", name: "Deutsch")
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+
+                Divider().padding(.horizontal, 16)
+
+                sectionHeader(loc("s.notifications", lang))
+
+                Toggle(loc("s.notificationsToggle", lang), isOn: $notificationsEnabled)
                     .font(.system(size: 13))
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
@@ -38,7 +55,7 @@ struct SettingsView: View {
                     }
 
                 if permissionDenied {
-                    Text("Dozvoli notifikacije u Postavkama → Notifikacije")
+                    Text(loc("s.notificationsDenied", lang))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 16)
@@ -48,17 +65,17 @@ struct SettingsView: View {
                 if notificationsEnabled {
                     Divider().padding(.horizontal, 16)
 
-                    sectionHeader("Namazi")
+                    sectionHeader(loc("s.prayers", lang))
 
-                    prayerToggle("Zora",     key: $fajrEnabled)
-                    prayerToggle("Podne",    key: $dhuhrEnabled)
-                    prayerToggle("Ikindija", key: $asrEnabled)
-                    prayerToggle("Akšam",    key: $maghribEnabled)
-                    prayerToggle("Jacija",   key: $ishaEnabled)
+                    prayerToggle(loc("prayer.fajr",    lang), key: $fajrEnabled)
+                    prayerToggle(loc("prayer.dhuhr",   lang), key: $dhuhrEnabled)
+                    prayerToggle(loc("prayer.asr",     lang), key: $asrEnabled)
+                    prayerToggle(loc("prayer.maghrib", lang), key: $maghribEnabled)
+                    prayerToggle(loc("prayer.isha",    lang), key: $ishaEnabled)
 
                     Divider().padding(.horizontal, 16)
 
-                    sectionHeader("Minuta prije namaza")
+                    sectionHeader(loc("s.minutesBefore", lang))
 
                     Picker("", selection: $minutesBefore) {
                         Text("5 min").tag(5)
@@ -73,9 +90,68 @@ struct SettingsView: View {
 
                 Divider().padding(.horizontal, 16)
 
-                sectionHeader("Opće")
+                sectionHeader(loc("s.reminders", lang))
 
-                Toggle("Pokreni pri startu", isOn: $launchAtLogin)
+                Toggle(loc("s.10min", lang), isOn: $reminders10MinEnabled)
+                    .font(.system(size: 13))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+
+                Text(loc("s.10minNote", lang))
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 6)
+
+                Toggle(loc("s.spiritual", lang), isOn: $remindersSpecialEnabled)
+                    .font(.system(size: 13))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+
+                Text(loc("s.spiritualNote", lang))
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 6)
+
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { showLockedInfo = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                        withAnimation(.easeInOut(duration: 0.2)) { showLockedInfo = false }
+                    }
+                } label: {
+                    HStack {
+                        Text(loc("s.30min", lang))
+                            .font(.system(size: 13))
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.tertiary)
+                        Toggle("", isOn: .constant(true))
+                            .labelsHidden()
+                            .disabled(true)
+                            .scaleEffect(0.8)
+                    }
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+
+                if showLockedInfo {
+                    Text(loc("s.30minLocked", lang))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 6)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+
+                Divider().padding(.horizontal, 16)
+
+                sectionHeader(loc("s.general", lang))
+
+                Toggle(loc("s.launchAtLogin", lang), isOn: $launchAtLogin)
                     .font(.system(size: 13))
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
@@ -91,7 +167,7 @@ struct SettingsView: View {
                         }
                     }
 
-                Text("Zahtijeva da je app u /Applications folderu.")
+                Text(loc("s.launchAtLoginNote", lang))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .padding(.horizontal, 16)
@@ -99,6 +175,31 @@ struct SettingsView: View {
             }
         }
         .frame(width: 300)
+    }
+
+    private func languageButton(code: String, flag: String, name: String) -> some View {
+        Button {
+            language = code
+        } label: {
+            HStack(spacing: 6) {
+                Text(flag)
+                    .font(.system(size: 16))
+                Text(name)
+                    .font(.system(size: 13))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(language == code ? Color.accentColor.opacity(0.15) : Color.clear)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(language == code ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: 1)
+                    )
+            )
+            .foregroundStyle(language == code ? Color.accentColor : .primary)
+        }
+        .buttonStyle(.plain)
     }
 
     private func sectionHeader(_ title: String) -> some View {
