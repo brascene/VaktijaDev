@@ -16,12 +16,19 @@ Minimalna macOS menu bar aplikacija za praćenje vaktije (namaz vremena) u grado
 
 - Prikaz 5 dnevnih namaza + izlazak sunca
 - Hidžretski i gregorijanski datum
+- Automatski countdown do sljedećeg namaza (odbrojava u realnom vremenu)
 - Automatsko označavanje sljedećeg namaza
 - Pola noći i zadnja trećina noći
 - Odabir grada po državi — 200+ gradova u 25 država
 - Opcija "Koristi moju lokaciju" — GPS podrška
 - Hidžretski kalendar s vaktijom po danu
 - Lokalne notifikacije prije namaza (5, 10, 15, 20 min)
+- **Reminder panel** — lebdeći prozor pored menu bar ikone sa hadisima i motivacijskim porukama:
+  - 10 minuta prije svakog namaza
+  - 30 minuta prije namaza (uvijek uključeno — podsjetnik da prethodni namaz ne prođe)
+  - Duha namaz (65% između izlaska sunca i podne-a)
+  - Noćni namaz (polanoć) i zadnja trećina noći
+- **Višejezična podrška** — 🇧🇦 Bosanski / 🇬🇧 English / 🇩🇪 Deutsch, s trenutnom primjenom bez restarta
 - Račun sa uglom od 14.5° za sabah i jaciju — [zašto 14.5°?](https://github.com/brascene/VaktijaDev/wiki)
 - Bez Dock ikone — živi samo u menu baru
 
