@@ -15,7 +15,7 @@ final class PrayerTimesViewModel {
 
     @ObservationIgnored private var lastFetchDate: String?
     @ObservationIgnored private var countdownTimer: Timer?
-    @ObservationIgnored private var reminderFiredKey: String?
+    @ObservationIgnored private var reminderFiredKeys: Set<String> = []
 
     init() {
         self.selectedCity = CityList.defaultCity
@@ -208,6 +208,7 @@ final class PrayerTimesViewModel {
     private func tickCountdown() {
         updateNextPrayer()
         updateCountdownString()
+        checkSpecialReminders()
     }
 
     private func updateCountdownString() {
@@ -272,16 +273,117 @@ final class PrayerTimesViewModel {
             timeUntilNextPrayer = String(format: "%dm %02ds", minutes, seconds)
         }
 
-        // Pokreni panel reminder kad padne na 10 minuta (jednom po namazu)
-        let reminderKey = "\(nextPrayer)_\(todayISO())"
-        if totalSeconds <= 600 && reminderFiredKey != reminderKey {
-            reminderFiredKey = reminderKey
+        // 30 minuta prije — upozori da prethodni namaz još nije klanjan
+        let expiringMap: [String: (prev: String, prevDisplay: String, nextDisplay: String)] = [
+            "dhuhr":   (prev: "fajr",    prevDisplay: "Zora",     nextDisplay: "Podne"),
+            "asr":     (prev: "dhuhr",   prevDisplay: "Podne",    nextDisplay: "Ikindija"),
+            "maghrib": (prev: "asr",     prevDisplay: "Ikindija", nextDisplay: "Akšam"),
+            "isha":    (prev: "maghrib", prevDisplay: "Akšam",    nextDisplay: "Jacija"),
+            "fajr":    (prev: "isha",    prevDisplay: "Jacija",   nextDisplay: "Zora"),
+        ]
+        let expiringKey = "\(nextPrayer)_expiring_\(todayISO())"
+        if totalSeconds <= 1800 && reminderFiredKeys.insert(expiringKey).inserted,
+           let info = expiringMap[nextPrayer] {
             NotificationCenter.default.post(
                 name: .prayerReminderDue,
                 object: nil,
-                userInfo: ["prayer": nextPrayer, "time": cleanTime]
+                userInfo: [
+                    "prayer": info.prev,
+                    "subtitle": "ističe za 30 minuta",
+                    "expiringPrev": info.prevDisplay,
+                    "expiringNext": info.nextDisplay,
+                ]
             )
         }
+
+        // Pokreni panel reminder kad padne na 10 minuta (jednom po namazu)
+        let reminderKey = "\(nextPrayer)_\(todayISO())"
+        if totalSeconds <= 600 && reminderFiredKeys.insert(reminderKey).inserted {
+            NotificationCenter.default.post(
+                name: .prayerReminderDue,
+                object: nil,
+                userInfo: [
+                    "prayer": nextPrayer,
+                    "time": cleanTime,
+                    "subtitle": "za 10 minuta · \(cleanTime)",
+                ]
+            )
+        }
+    }
+
+    private func checkSpecialReminders() {
+        guard let timings else { return }
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        let now = formatter.string(from: Date())
+        let today = todayISO()
+
+        // Duha: 65% puta između izlaska sunca i podne-a
+        if let duhaTime = calculateDuhaTime() {
+            let key = "duha_\(today)"
+            if now >= duhaTime && now < (timings.dhuhr.components(separatedBy: " ").first ?? timings.dhuhr)
+                && reminderFiredKeys.insert(key).inserted {
+                NotificationCenter.default.post(
+                    name: .prayerReminderDue,
+                    object: nil,
+                    userInfo: [
+                        "prayer": "duha",
+                        "time": duhaTime,
+                        "subtitle": "Duha namaz · \(duhaTime)",
+                    ]
+                )
+            }
+        }
+
+        // Polanoć i zadnja trećina — aktivni samo između ponoći i 06:00
+        guard now >= "00:00" && now < "06:00" else { return }
+
+        if let polaNoci = timings.polaNoci {
+            let clean = polaNoci.components(separatedBy: " ").first ?? polaNoci
+            let key = "polaNoci_\(today)"
+            if now >= clean && reminderFiredKeys.insert(key).inserted {
+                NotificationCenter.default.post(
+                    name: .prayerReminderDue,
+                    object: nil,
+                    userInfo: [
+                        "prayer": "polaNoci",
+                        "time": clean,
+                        "subtitle": "Nastupilo je noćno doba · \(clean)",
+                    ]
+                )
+            }
+        }
+
+        if let zadnjaTrecina = timings.zadnjaTrecina {
+            let clean = zadnjaTrecina.components(separatedBy: " ").first ?? zadnjaTrecina
+            let key = "zadnjaTrecina_\(today)"
+            if now >= clean && reminderFiredKeys.insert(key).inserted {
+                NotificationCenter.default.post(
+                    name: .prayerReminderDue,
+                    object: nil,
+                    userInfo: [
+                        "prayer": "zadnjaTrecina",
+                        "time": clean,
+                        "subtitle": "Zadnja trećina noći · \(clean)",
+                    ]
+                )
+            }
+        }
+    }
+
+    private func calculateDuhaTime() -> String? {
+        guard let timings else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        let sunriseClean = timings.sunrise.components(separatedBy: " ").first ?? timings.sunrise
+        let dhuhrClean = timings.dhuhr.components(separatedBy: " ").first ?? timings.dhuhr
+        guard let sunriseDate = formatter.date(from: sunriseClean),
+              let dhuhrDate = formatter.date(from: dhuhrClean) else { return nil }
+        let interval = dhuhrDate.timeIntervalSince(sunriseDate)
+        guard interval > 0 else { return nil }
+        let duhaDate = sunriseDate.addingTimeInterval(interval * 0.65)
+        return formatter.string(from: duhaDate)
     }
 
     private func todayISO() -> String {

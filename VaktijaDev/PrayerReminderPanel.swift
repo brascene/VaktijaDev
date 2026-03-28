@@ -133,6 +133,75 @@ enum ReminderMessages {
         ),
     ]
 
+    private static let duha: [ReminderMessage] = [
+        ReminderMessage(
+            body: "Ko klanja duha namaz, pripisat će mu se nagrada kao da je dao sadaku za svaki zglavak tijela.",
+            source: "Muslim"
+        ),
+        ReminderMessage(
+            body: "Allahov Poslanik ﷺ je klanjao duha 4 do 8 rekata. Počni sa dva – Allah prima i najmanje.",
+            source: "Muslim"
+        ),
+        ReminderMessage(
+            body: "Duha namaz je namaz pokajanja i zahvalnosti. Klanjaj ga dok si još svjež i napolju je jasno.",
+            source: nil
+        ),
+        ReminderMessage(
+            body: "Ko klanja duha redovito, svi njegovi grijesi mu se opraste, makar bili kao morska pjena.",
+            source: "Tirmizi"
+        ),
+        ReminderMessage(
+            body: "Ovo je duha doba – ptice slave Allaha, a ti možeš im se pridružiti sa dva rekata.",
+            source: nil
+        ),
+    ]
+
+    private static let polaNoci: [ReminderMessage] = [
+        ReminderMessage(
+            body: "Probudi se i klanjaj bar dva rekata noćnog namaza. Allah voli one koji ustaju kada drugi spavaju.",
+            source: nil
+        ),
+        ReminderMessage(
+            body: "Allahov Poslanik ﷺ je ustajao noću da klanja dok mu se noge ne bi otekle. Upitan zašto, odgovorio je: 'Zar ne bih bio zahvalan rob?'",
+            source: "Buhari, Muslim"
+        ),
+        ReminderMessage(
+            body: "Kijamu-l-lejl – noćni namaz je dobrovoljni ibadet koji uzdiže stepene i briše grijehe.",
+            source: nil
+        ),
+        ReminderMessage(
+            body: "Ko ustane noću i probudi svoju porodicu da klanja, Allah im upiše nagradu kao onima koji stalno Allaha spominju.",
+            source: "Ebu Davud"
+        ),
+        ReminderMessage(
+            body: "Noćni namaz je počast vjerniku. Ustaj, abdest uzmi i klanjaj koliko možeš.",
+            source: nil
+        ),
+    ]
+
+    private static let zadnjaTrecina: [ReminderMessage] = [
+        ReminderMessage(
+            body: "Allah pita u zadnjoj trećini noći: 'Ko Me zove da Mu se odazovem? Ko traži da mu dam? Ko traži oprost da mu oprostim?'",
+            source: "Buhari, Muslim"
+        ),
+        ReminderMessage(
+            body: "Klanjaj noćni namaz, pa vitr, pa čini istigfar do zore. Ovo je najvrjednije doba noći za dovu.",
+            source: nil
+        ),
+        ReminderMessage(
+            body: "Istigfar u zadnjoj trećini noći: 'Estağfirullah' – učini ga 70 ili 100 puta do zore.",
+            source: nil
+        ),
+        ReminderMessage(
+            body: "Oni koji traže oprost u jutarnjim satima – Allah ih hvali u Kur'anu.",
+            source: "Kur'an, 3:17"
+        ),
+        ReminderMessage(
+            body: "Vitr namaz je hak – ko ga nije klanjao, neka ga klanja sad. Zatvori noć sa vitrom.",
+            source: "Ebu Davud"
+        ),
+    ]
+
     private static let general: [ReminderMessage] = [
         ReminderMessage(
             body: "Namaz u džematu je 27 puta bolji od namaza samog.",
@@ -156,15 +225,30 @@ enum ReminderMessages {
         ),
     ]
 
+    static func expiring(prev: String, next: String) -> ReminderMessage {
+        let templates: [(String, String?)] = [
+            ("Za 30 minuta stiže \(next), a \(prev) još nije klanjan. Iskoristi ovo vrijeme – abdest, kibla, namaz.", nil),
+            ("Bliži se \(next), a \(prev) još čeka. Ne ulazi u novi namaz sa dugom od prethodnog.", nil),
+            ("Namaz u svom vremenu je najdraže djelo Allahu. Za 30 minuta \(prev) ističe – požuri.", "Buhari"),
+            ("Za 30 minuta \(next) kuca na vrata, a \(prev) još nije klanjan. Ustaj odmah.", nil),
+            ("Još 30 minuta pa \(prev) zatvara svoja vrata. Klanjaj ga dok možeš.", nil),
+        ]
+        let (body, source) = templates.randomElement()!
+        return ReminderMessage(body: body, source: source)
+    }
+
     static func random(for prayer: String) -> ReminderMessage {
         let pool: [ReminderMessage]
         switch prayer {
-        case "fajr":    pool = fajr + general
-        case "dhuhr":   pool = dhuhr + general
-        case "asr":     pool = asr + general
-        case "maghrib": pool = maghrib + general
-        case "isha":    pool = isha + general
-        default:        pool = general
+        case "fajr":          pool = fajr + general
+        case "dhuhr":         pool = dhuhr + general
+        case "asr":           pool = asr + general
+        case "maghrib":       pool = maghrib + general
+        case "isha":          pool = isha + general
+        case "duha":          pool = duha
+        case "polaNoci":      pool = polaNoci
+        case "zadnjaTrecina": pool = zadnjaTrecina
+        default:              pool = general
         }
         return pool.randomElement() ?? general[0]
     }
@@ -174,7 +258,7 @@ enum ReminderMessages {
 
 private struct PrayerReminderContent: View {
     let prayerDisplayName: String
-    let time: String
+    let subtitle: String
     let message: ReminderMessage
     let onDismiss: () -> Void
 
@@ -188,7 +272,7 @@ private struct PrayerReminderContent: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(prayerDisplayName)
                         .font(.system(size: 14, weight: .semibold))
-                    Text("za 10 minuta · \(time)")
+                    Text(subtitle)
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
@@ -234,18 +318,24 @@ final class PrayerReminderPanel: NSPanel {
     private static var current: PrayerReminderPanel?
     private var dismissTimer: Timer?
 
-    static func show(prayer: String, time: String, buttonFrame: NSRect, screen: NSScreen) {
+    static func show(prayer: String, subtitle: String, message: ReminderMessage? = nil, buttonFrame: NSRect, screen: NSScreen) {
         DispatchQueue.main.async {
             Self.current?.forceClose()
 
             let prayerNames: [String: String] = [
-                "fajr": "Zora", "dhuhr": "Podne", "asr": "Ikindija",
-                "maghrib": "Akšam", "isha": "Jacija",
+                "fajr": "Zora",
+                "dhuhr": "Podne",
+                "asr": "Ikindija",
+                "maghrib": "Akšam",
+                "isha": "Jacija",
+                "duha": "Duha namaz",
+                "polaNoci": "Noćni namaz",
+                "zadnjaTrecina": "Zadnja trećina noći",
             ]
             let displayName = prayerNames[prayer] ?? prayer.capitalized
-            let message = ReminderMessages.random(for: prayer)
+            let resolvedMessage = message ?? ReminderMessages.random(for: prayer)
 
-            let panel = PrayerReminderPanel(prayer: displayName, time: time, message: message)
+            let panel = PrayerReminderPanel(prayer: displayName, subtitle: subtitle, message: resolvedMessage)
             panel.position(below: buttonFrame, screen: screen)
             panel.animateIn()
             NSSound(named: NSSound.Name("Ping"))?.play()
@@ -253,7 +343,7 @@ final class PrayerReminderPanel: NSPanel {
         }
     }
 
-    private init(prayer: String, time: String, message: ReminderMessage) {
+    private init(prayer: String, subtitle: String, message: ReminderMessage) {
         super.init(
             contentRect: NSRect(x: 0, y: 0, width: 300, height: 160),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -269,7 +359,7 @@ final class PrayerReminderPanel: NSPanel {
 
         let content = PrayerReminderContent(
             prayerDisplayName: prayer,
-            time: time,
+            subtitle: subtitle,
             message: message,
             onDismiss: { [weak self] in self?.animateOut() }
         )

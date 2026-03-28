@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var selectedTab = 0
-    @State private var prayerVM = PrayerTimesViewModel()
+    var prayerVM: PrayerTimesViewModel
 
     var body: some View {
         HStack(spacing: 0) {

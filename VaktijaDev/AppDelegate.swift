@@ -4,6 +4,7 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
+    private let prayerVM = PrayerTimesViewModel()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Close any default window that SwiftUI might open
@@ -11,10 +12,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.close()
         }
 
+        // Fetch prayer times immediately at launch (before popover is opened)
+        Task { await prayerVM.fetchIfNeeded() }
+
         // Setup popover
         popover = NSPopover()
         popover.behavior = .transient
-        let hostingController = NSHostingController(rootView: ContentView())
+        let hostingController = NSHostingController(rootView: ContentView(prayerVM: prayerVM))
         hostingController.sizingOptions = .preferredContentSize
         popover.contentViewController = hostingController
 
@@ -34,13 +38,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [weak self] notification in
             guard let self,
                   let prayer = notification.userInfo?["prayer"] as? String,
-                  let time = notification.userInfo?["time"] as? String,
+                  let subtitle = notification.userInfo?["subtitle"] as? String,
                   let button = self.statusItem.button,
                   let window = button.window else { return }
 
             let buttonFrame = window.convertToScreen(button.frame)
             let screen = window.screen ?? NSScreen.main!
-            PrayerReminderPanel.show(prayer: prayer, time: time, buttonFrame: buttonFrame, screen: screen)
+
+            // Expiring reminder — generiši poruku sa imenima namaza
+            var message: ReminderMessage? = nil
+            if let prev = notification.userInfo?["expiringPrev"] as? String,
+               let next = notification.userInfo?["expiringNext"] as? String {
+                message = ReminderMessages.expiring(prev: prev, next: next)
+            }
+
+            PrayerReminderPanel.show(prayer: prayer, subtitle: subtitle, message: message, buttonFrame: buttonFrame, screen: screen)
         }
     }
 
