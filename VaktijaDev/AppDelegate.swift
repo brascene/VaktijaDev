@@ -25,6 +25,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.action = #selector(togglePopover)
             button.target = self
         }
+
+        // Prayer reminder panel
+        NotificationCenter.default.addObserver(
+            forName: .prayerReminderDue,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self,
+                  let prayer = notification.userInfo?["prayer"] as? String,
+                  let time = notification.userInfo?["time"] as? String,
+                  let button = self.statusItem.button,
+                  let window = button.window else { return }
+
+            let buttonFrame = window.convertToScreen(button.frame)
+            let screen = window.screen ?? NSScreen.main!
+            PrayerReminderPanel.show(prayer: prayer, time: time, buttonFrame: buttonFrame, screen: screen)
+        }
     }
 
     @objc private func togglePopover() {

@@ -15,6 +15,7 @@ final class PrayerTimesViewModel {
 
     @ObservationIgnored private var lastFetchDate: String?
     @ObservationIgnored private var countdownTimer: Timer?
+    @ObservationIgnored private var reminderFiredKey: String?
 
     init() {
         self.selectedCity = CityList.defaultCity
@@ -269,6 +270,17 @@ final class PrayerTimesViewModel {
             timeUntilNextPrayer = "\(hours)h \(minutes)m"
         } else {
             timeUntilNextPrayer = String(format: "%dm %02ds", minutes, seconds)
+        }
+
+        // Pokreni panel reminder kad padne na 10 minuta (jednom po namazu)
+        let reminderKey = "\(nextPrayer)_\(todayISO())"
+        if totalSeconds <= 600 && reminderFiredKey != reminderKey {
+            reminderFiredKey = reminderKey
+            NotificationCenter.default.post(
+                name: .prayerReminderDue,
+                object: nil,
+                userInfo: ["prayer": nextPrayer, "time": cleanTime]
+            )
         }
     }
 
