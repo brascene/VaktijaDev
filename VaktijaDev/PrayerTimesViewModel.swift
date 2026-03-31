@@ -276,24 +276,21 @@ final class PrayerTimesViewModel {
         }
 
         // 30 minuta prije — uvijek uključeno, upozori da prethodni namaz još nije klanjan
-        let expiringMap: [String: (prev: String, prevDisplay: String, nextDisplay: String)] = [
-            "dhuhr":   (prev: "fajr",    prevDisplay: "Zora",     nextDisplay: "Podne"),
-            "asr":     (prev: "dhuhr",   prevDisplay: "Podne",    nextDisplay: "Ikindija"),
-            "maghrib": (prev: "asr",     prevDisplay: "Ikindija", nextDisplay: "Akšam"),
-            "isha":    (prev: "maghrib", prevDisplay: "Akšam",    nextDisplay: "Jacija"),
-            "fajr":    (prev: "isha",    prevDisplay: "Jacija",   nextDisplay: "Zora"),
+        let expiringPrevMap: [String: String] = [
+            "dhuhr": "fajr", "asr": "dhuhr", "maghrib": "asr", "isha": "maghrib", "fajr": "isha",
         ]
+        let lang = UserDefaults.standard.string(forKey: "appLanguage") ?? "bs"
         let expiringKey = "\(nextPrayer)_expiring_\(todayISO())"
         if totalSeconds <= 1800 && reminderFiredKeys.insert(expiringKey).inserted,
-           let info = expiringMap[nextPrayer] {
+           let prevKey = expiringPrevMap[nextPrayer] {
             NotificationCenter.default.post(
                 name: .prayerReminderDue,
                 object: nil,
                 userInfo: [
-                    "prayer": info.prev,
-                    "subtitle": "ističe za 30 minuta",
-                    "expiringPrev": info.prevDisplay,
-                    "expiringNext": info.nextDisplay,
+                    "prayer": prevKey,
+                    "subtitle": loc("reminder.sub.expiring", lang),
+                    "expiringPrev": prevKey,
+                    "expiringNext": nextPrayer,
                 ]
             )
         }
@@ -308,7 +305,7 @@ final class PrayerTimesViewModel {
                 userInfo: [
                     "prayer": nextPrayer,
                     "time": cleanTime,
-                    "subtitle": "za 10 minuta · \(cleanTime)",
+                    "subtitle": "\(loc("reminder.sub.10min", lang)) · \(cleanTime)",
                 ]
             )
         }

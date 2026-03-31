@@ -405,9 +405,11 @@ final class PrayerReminderPanel: NSPanel {
             Self.current?.forceClose()
 
             let lang = UserDefaults.standard.string(forKey: "appLanguage") ?? "bs"
-            let displayName = loc("reminder.\(prayer)", lang).isEmpty
-                ? (loc("prayer.\(prayer)", lang))
-                : loc("reminder.\(prayer)", lang)
+            let reminderKey = "reminder.\(prayer)"
+            let reminderLocalized = loc(reminderKey, lang)
+            let displayName = reminderLocalized != reminderKey
+                ? reminderLocalized
+                : loc("prayer.\(prayer)", lang)
             let resolvedMessage = message ?? ReminderMessages.random(for: prayer)
 
             let panel = PrayerReminderPanel(prayer: displayName, subtitle: subtitle, message: resolvedMessage)
