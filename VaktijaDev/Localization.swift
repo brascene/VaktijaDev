@@ -75,6 +75,8 @@ let translations: [String: [String: String]] = [
         "s.general":              "Opće",
         "s.launchAtLogin":        "Pokreni pri startu",
         "s.launchAtLoginNote":    "Zahtijeva da je app u /Applications folderu.",
+        "s.restart":              "Restartuj aplikaciju",
+        "s.restartNote":          "Primijeni ažuriranja ili osvježi podatke.",
         // Reminder panel
         "reminder.duha":          "Duha namaz",
         "reminder.polaNoci":      "Noćni namaz",
@@ -138,6 +140,8 @@ let translations: [String: [String: String]] = [
         "s.general":              "General",
         "s.launchAtLogin":        "Launch at login",
         "s.launchAtLoginNote":    "Requires the app to be in /Applications folder.",
+        "s.restart":              "Restart app",
+        "s.restartNote":          "Apply updates or refresh data.",
         // Reminder panel
         "reminder.duha":          "Duha Prayer",
         "reminder.polaNoci":      "Night Prayer",
@@ -201,6 +205,8 @@ let translations: [String: [String: String]] = [
         "s.general":              "Allgemein",
         "s.launchAtLogin":        "Bei Anmeldung starten",
         "s.launchAtLoginNote":    "Erfordert, dass sich die App im /Applications-Ordner befindet.",
+        "s.restart":              "App neu starten",
+        "s.restartNote":          "Updates anwenden oder Daten aktualisieren.",
         // Reminder panel
         "reminder.duha":          "Duha-Gebet",
         "reminder.polaNoci":      "Nachtgebet",

@@ -281,7 +281,6 @@ enum ReminderMessages {
     ]
 
     static func expiring(prevKey: String, nextKey: String) -> ReminderMessage {
-        let lang = UserDefaults.standard.string(forKey: "appLanguage") ?? "bs"
         let prev = loc("prayer.\(prevKey)", "bs")
         let next = loc("prayer.\(nextKey)", "bs")
         let prevEn = loc("prayer.\(prevKey)", "en")
@@ -344,52 +343,65 @@ private struct PrayerReminderContent: View {
     let message: ReminderMessage
     let onDismiss: () -> Void
 
+    private let warningColor = Color.orange
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 10) {
-                Image(systemName: "moon.stars.fill")
-                    .foregroundStyle(Color.accentColor)
-                    .font(.system(size: 16))
+        HStack(spacing: 0) {
+            // Left accent border
+            warningColor
+                .frame(width: 4)
+                .clipShape(UnevenRoundedRectangle(
+                    topLeadingRadius: 12, bottomLeadingRadius: 12,
+                    bottomTrailingRadius: 0, topTrailingRadius: 0
+                ))
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(prayerDisplayName)
-                        .font(.system(size: 14, weight: .semibold))
-                    Text(subtitle)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Button(action: onDismiss) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 17))
-                        .foregroundStyle(.tertiary)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .center, spacing: 10) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(warningColor)
+                        .font(.system(size: 15))
                         .symbolRenderingMode(.hierarchical)
-                }
-                .buttonStyle(.plain)
-                .help("Zatvori")
-            }
 
-            Divider()
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(prayerDisplayName)
+                            .font(.system(size: 14, weight: .semibold))
+                        Text(subtitle)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
 
-            Text(message.localizedBody())
-                .font(.system(size: 13))
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
-                .lineSpacing(2)
-
-            if let source = message.source {
-                HStack {
                     Spacer()
-                    Text("— \(source)")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .italic()
+
+                    Button(action: onDismiss) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 17))
+                            .foregroundStyle(.tertiary)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Zatvori")
+                }
+
+                Divider()
+
+                Text(message.localizedBody())
+                    .font(.system(size: 13))
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineSpacing(2)
+
+                if let source = message.source {
+                    HStack {
+                        Spacer()
+                        Text("— \(source)")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                            .italic()
+                    }
                 }
             }
+            .padding(14)
         }
-        .padding(14)
         .frame(width: 300)
     }
 }

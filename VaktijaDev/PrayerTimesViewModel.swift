@@ -277,7 +277,7 @@ final class PrayerTimesViewModel {
 
         // 30 minuta prije — uvijek uključeno, upozori da prethodni namaz još nije klanjan
         let expiringPrevMap: [String: String] = [
-            "dhuhr": "fajr", "asr": "dhuhr", "maghrib": "asr", "isha": "maghrib", "fajr": "isha",
+            "asr": "dhuhr", "maghrib": "asr", "isha": "maghrib", "fajr": "isha",
         ]
         let lang = UserDefaults.standard.string(forKey: "appLanguage") ?? "bs"
         let expiringKey = "\(nextPrayer)_expiring_\(todayISO())"

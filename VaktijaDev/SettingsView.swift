@@ -171,6 +171,34 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+
+                Divider().padding(.horizontal, 16)
+
+                Button {
+                    let url = Bundle.main.bundleURL
+                    let task = Process()
+                    task.launchPath = "/bin/sh"
+                    task.arguments = ["-c", "sleep 0.5; open \"\(url.path)\""]
+                    try? task.run()
+                    NSApp.terminate(nil)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 12))
+                        Text(loc("s.restart", lang))
+                            .font(.system(size: 13))
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+
+                Text(loc("s.restartNote", lang))
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, 16)
                     .padding(.bottom, 16)
             }
         }
