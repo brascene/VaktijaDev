@@ -22,10 +22,11 @@ final class PrayerTimesViewModel {
     }
 
     func fetchPrayerTimes() async {
+        guard !isLoading else { return }
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
 
-        // Determine coordinates and optional city_id
         let lat: Double
         let lon: Double
         let cityId: Int?
@@ -34,13 +35,11 @@ final class PrayerTimesViewModel {
             await locationManager.requestLocation()
             if let error = locationManager.error {
                 errorMessage = error
-                isLoading = false
                 return
             }
             guard let locLat = locationManager.latitude, let locLon = locationManager.longitude else {
                 let lang = UserDefaults.standard.string(forKey: "appLanguage") ?? "bs"
                 errorMessage = loc("location.unavailable", lang)
-                isLoading = false
                 return
             }
             lat = locLat
@@ -52,7 +51,6 @@ final class PrayerTimesViewModel {
             cityId = selectedCity.cityId
         }
 
-        // Try primary API (vaktija.dev)
         if let result = await fetchFromVaktijaDev(lat: lat, lon: lon, cityId: cityId) {
             timings = result.timings
             dateInfo = result.dateInfo
@@ -60,11 +58,9 @@ final class PrayerTimesViewModel {
             updateNextPrayer()
             startCountdownTimer()
             NotificationManager.shared.scheduleIfEnabled(timings: result.timings)
-            isLoading = false
             return
         }
 
-        // Fallback to Aladhan
         if let result = await fetchFromAladhan(lat: lat, lon: lon) {
             timings = result.timings
             dateInfo = result.dateInfo
@@ -76,8 +72,6 @@ final class PrayerTimesViewModel {
             let lang = UserDefaults.standard.string(forKey: "appLanguage") ?? "bs"
             errorMessage = loc("error.fetch", lang)
         }
-
-        isLoading = false
     }
 
     private func fetchFromVaktijaDev(lat: Double, lon: Double, cityId: Int?) async -> (timings: PrayerTimings, dateInfo: PrayerDateInfo)? {
@@ -97,15 +91,16 @@ final class PrayerTimesViewModel {
             let response = try JSONDecoder().decode(VaktijaResponse.self, from: data)
             guard response.success else { return nil }
             let v = response.data
+            let nv = v.namaska_vremena.converted(from: v.location?.timezone, on: v.date)
             let timings = PrayerTimings(
-                fajr: v.namaska_vremena.zora,
-                sunrise: v.namaska_vremena.izlazak,
-                dhuhr: v.namaska_vremena.podne,
-                asr: v.namaska_vremena.ikindija,
-                maghrib: v.namaska_vremena.aksam,
-                isha: v.namaska_vremena.jacija,
-                polaNoci: v.namaska_vremena.pola_noci,
-                zadnjaTrecina: v.namaska_vremena.zadnja_trecina
+                fajr: nv.zora,
+                sunrise: nv.izlazak,
+                dhuhr: nv.podne,
+                asr: nv.ikindija,
+                maghrib: nv.aksam,
+                isha: nv.jacija,
+                polaNoci: nv.pola_noci,
+                zadnjaTrecina: nv.zadnja_trecina
             )
             let dateInfo = PrayerDateInfo(
                 readable: v.date_formatted,
@@ -320,6 +315,8 @@ final class PrayerTimesViewModel {
         let now = formatter.string(from: Date())
         let today = todayISO()
 
+        let lang = currentLang()
+
         // Duha: 65% puta između izlaska sunca i podne-a
         if let duhaTime = calculateDuhaTime() {
             let key = "duha_\(today)"
@@ -331,7 +328,7 @@ final class PrayerTimesViewModel {
                     userInfo: [
                         "prayer": "duha",
                         "time": duhaTime,
-                        "subtitle": "Duha namaz · \(duhaTime)",
+                        "subtitle": "\(loc("reminder.sub.duha", lang)) · \(duhaTime)",
                     ]
                 )
             }
@@ -350,7 +347,7 @@ final class PrayerTimesViewModel {
                     userInfo: [
                         "prayer": "polaNoci",
                         "time": clean,
-                        "subtitle": "Nastupilo je noćno doba · \(clean)",
+                        "subtitle": "\(loc("reminder.sub.night", lang)) · \(clean)",
                     ]
                 )
             }
@@ -366,7 +363,7 @@ final class PrayerTimesViewModel {
                     userInfo: [
                         "prayer": "zadnjaTrecina",
                         "time": clean,
-                        "subtitle": "Zadnja trećina noći · \(clean)",
+                        "subtitle": "\(loc("reminder.sub.lastThird", lang)) · \(clean)",
                     ]
                 )
             }

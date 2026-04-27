@@ -19,6 +19,27 @@ func loc(_ key: String, _ lang: String) -> String {
     translations[lang]?[key] ?? translations["bs"]?[key] ?? key
 }
 
+// Current language from AppStorage — used by non-SwiftUI code paths (managers, panels).
+func currentLang() -> String {
+    UserDefaults.standard.string(forKey: "appLanguage") ?? "bs"
+}
+
+// Translates a Bosnian weekday name returned by the vaktija.dev API into the current locale.
+func localizedWeekday(_ bosnianDayName: String, lang: String) -> String {
+    let key = bosnianDayName.lowercased().folding(options: .diacriticInsensitive, locale: Locale(identifier: "bs"))
+    let mapping: [String: String] = [
+        "ponedjeljak": "day.full.mon",
+        "utorak":      "day.full.tue",
+        "srijeda":     "day.full.wed",
+        "cetvrtak":    "day.full.thu",
+        "petak":       "day.full.fri",
+        "subota":      "day.full.sat",
+        "nedjelja":    "day.full.sun",
+    ]
+    guard let locKey = mapping[key] else { return bosnianDayName.capitalized }
+    return loc(locKey, lang)
+}
+
 // MARK: - All translations
 
 let translations: [String: [String: String]] = [
@@ -46,6 +67,8 @@ let translations: [String: [String: String]] = [
         "location.useCity":     "Koristi listu gradova",
         "location.useMine":     "Koristi moju lokaciju",
         "location.unavailable": "Lokacija nije dostupna",
+        "location.denied":      "Lokacija nije dozvoljena",
+        "location.unknown":     "Nije moguće odrediti lokaciju",
         "error.fetch":          "Greška pri učitavanju vaktije",
         "btn.tryAgain":         "Pokušaj ponovo",
         "btn.openSettings":     "Postavke",
@@ -54,10 +77,19 @@ let translations: [String: [String: String]] = [
         "cal.empty":   "Odaberi grad za prikaz kalendara",
         "cal.day.mon": "Po", "cal.day.tue": "Ut", "cal.day.wed": "Sr",
         "cal.day.thu": "Če", "cal.day.fri": "Pe", "cal.day.sat": "Su", "cal.day.sun": "Ne",
+        "day.full.mon": "Ponedjeljak",
+        "day.full.tue": "Utorak",
+        "day.full.wed": "Srijeda",
+        "day.full.thu": "Četvrtak",
+        "day.full.fri": "Petak",
+        "day.full.sat": "Subota",
+        "day.full.sun": "Nedjelja",
         // City picker
-        "city.title":   "Odaberi grad",
-        "city.back":    "Nazad",
-        "city.country": "Država",
+        "city.title":      "Odaberi grad",
+        "city.back":       "Nazad",
+        "city.country":    "Država",
+        "search.placeholder": "Pretraži grad…",
+        "search.noResults":   "Nema rezultata za \"%@\"",
         // Settings sections
         "s.language":   "Jezik",
         "s.notifications":        "Notifikacije",
@@ -77,6 +109,11 @@ let translations: [String: [String: String]] = [
         "s.launchAtLoginNote":    "Zahtijeva da je app u /Applications folderu.",
         "s.restart":              "Restartuj aplikaciju",
         "s.restartNote":          "Primijeni ažuriranja ili osvježi podatke.",
+        "s.quit":                 "Izađi",
+        // Notification format
+        "notif.in":        "za",
+        "notif.min":       "min",
+        "notif.prayerAt":  "Namaz u",
         // Reminder panel
         "reminder.duha":          "Duha namaz",
         "reminder.polaNoci":      "Noćni namaz",
@@ -111,6 +148,8 @@ let translations: [String: [String: String]] = [
         "location.useCity":     "Use city list",
         "location.useMine":     "Use my location",
         "location.unavailable": "Location unavailable",
+        "location.denied":      "Location access denied",
+        "location.unknown":     "Unable to determine location",
         "error.fetch":          "Error loading prayer times",
         "btn.tryAgain":         "Try again",
         "btn.openSettings":     "Settings",
@@ -119,10 +158,19 @@ let translations: [String: [String: String]] = [
         "cal.empty":   "Select a city to view the calendar",
         "cal.day.mon": "Mo", "cal.day.tue": "Tu", "cal.day.wed": "We",
         "cal.day.thu": "Th", "cal.day.fri": "Fr", "cal.day.sat": "Sa", "cal.day.sun": "Su",
+        "day.full.mon": "Monday",
+        "day.full.tue": "Tuesday",
+        "day.full.wed": "Wednesday",
+        "day.full.thu": "Thursday",
+        "day.full.fri": "Friday",
+        "day.full.sat": "Saturday",
+        "day.full.sun": "Sunday",
         // City picker
-        "city.title":   "Select city",
-        "city.back":    "Back",
-        "city.country": "Country",
+        "city.title":      "Select city",
+        "city.back":       "Back",
+        "city.country":    "Country",
+        "search.placeholder": "Search city…",
+        "search.noResults":   "No results for \"%@\"",
         // Settings sections
         "s.language":   "Language",
         "s.notifications":        "Notifications",
@@ -142,6 +190,11 @@ let translations: [String: [String: String]] = [
         "s.launchAtLoginNote":    "Requires the app to be in /Applications folder.",
         "s.restart":              "Restart app",
         "s.restartNote":          "Apply updates or refresh data.",
+        "s.quit":                 "Quit",
+        // Notification format
+        "notif.in":        "in",
+        "notif.min":       "min",
+        "notif.prayerAt":  "Prayer at",
         // Reminder panel
         "reminder.duha":          "Duha Prayer",
         "reminder.polaNoci":      "Night Prayer",
@@ -176,6 +229,8 @@ let translations: [String: [String: String]] = [
         "location.useCity":     "Städteliste verwenden",
         "location.useMine":     "Meinen Standort verwenden",
         "location.unavailable": "Standort nicht verfügbar",
+        "location.denied":      "Standortzugriff verweigert",
+        "location.unknown":     "Standort konnte nicht ermittelt werden",
         "error.fetch":          "Fehler beim Laden der Gebetszeiten",
         "btn.tryAgain":         "Erneut versuchen",
         "btn.openSettings":     "Einstellungen",
@@ -184,10 +239,19 @@ let translations: [String: [String: String]] = [
         "cal.empty":   "Stadt auswählen, um den Kalender anzuzeigen",
         "cal.day.mon": "Mo", "cal.day.tue": "Di", "cal.day.wed": "Mi",
         "cal.day.thu": "Do", "cal.day.fri": "Fr", "cal.day.sat": "Sa", "cal.day.sun": "So",
+        "day.full.mon": "Montag",
+        "day.full.tue": "Dienstag",
+        "day.full.wed": "Mittwoch",
+        "day.full.thu": "Donnerstag",
+        "day.full.fri": "Freitag",
+        "day.full.sat": "Samstag",
+        "day.full.sun": "Sonntag",
         // City picker
-        "city.title":   "Stadt auswählen",
-        "city.back":    "Zurück",
-        "city.country": "Land",
+        "city.title":      "Stadt auswählen",
+        "city.back":       "Zurück",
+        "city.country":    "Land",
+        "search.placeholder": "Stadt suchen…",
+        "search.noResults":   "Keine Ergebnisse für \"%@\"",
         // Settings sections
         "s.language":   "Sprache",
         "s.notifications":        "Benachrichtigungen",
@@ -207,6 +271,11 @@ let translations: [String: [String: String]] = [
         "s.launchAtLoginNote":    "Erfordert, dass sich die App im /Applications-Ordner befindet.",
         "s.restart":              "App neu starten",
         "s.restartNote":          "Updates anwenden oder Daten aktualisieren.",
+        "s.quit":                 "Beenden",
+        // Notification format
+        "notif.in":        "in",
+        "notif.min":       "Min",
+        "notif.prayerAt":  "Gebet um",
         // Reminder panel
         "reminder.duha":          "Duha-Gebet",
         "reminder.polaNoci":      "Nachtgebet",

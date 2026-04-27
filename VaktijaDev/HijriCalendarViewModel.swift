@@ -40,7 +40,7 @@ final class HijriCalendarViewModel {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             let response = try JSONDecoder().decode(VaktijaMonthlyResponse.self, from: data)
-            days = response.data.days
+            days = response.data.days.map { $0.withConvertedTimes() }
             fetchedKey = "\(displayMonth)-\(displayYear)-\(cityId)"
         } catch {
             days = []

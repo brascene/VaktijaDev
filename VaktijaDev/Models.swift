@@ -100,6 +100,13 @@ struct VaktijaData: Codable, Sendable {
     let date_formatted: String
     let hijri: VaktijaHijri
     let namaska_vremena: NamaskaVremena
+    let location: VaktijaResponseLocation?
+}
+
+struct VaktijaResponseLocation: Codable, Sendable {
+    let city: String?
+    let country: String?
+    let timezone: String?
 }
 
 struct VaktijaHijri: Codable, Sendable {
@@ -139,7 +146,62 @@ struct VaktijaDayData: Codable, Identifiable {
     let day_name: String
     let hijri: VaktijaHijri
     let namaska_vremena: NamaskaVremena
+    let location: VaktijaResponseLocation?
     var id: String { date }
+
+    func withConvertedTimes() -> VaktijaDayData {
+        VaktijaDayData(
+            date: date,
+            date_formatted: date_formatted,
+            day_name: day_name,
+            hijri: hijri,
+            namaska_vremena: namaska_vremena.converted(from: location?.timezone, on: date),
+            location: location
+        )
+    }
+}
+
+// MARK: - API timezone conversion
+//
+// vaktija.dev returns prayer times in `Europe/Sarajevo` regardless of the queried
+// location. We convert each "HH:mm" string into the device's local timezone at
+// the API boundary so all downstream code (Calendar.current, notification
+// triggers) sees device-local times.
+enum APITimeConverter {
+    static func convert(_ time: String, from sourceTimezoneId: String?, on isoDate: String) -> String {
+        let cleanTime = String(time.components(separatedBy: " ").first ?? time)
+        guard !cleanTime.isEmpty,
+              let sourceTZ = TimeZone(identifier: sourceTimezoneId ?? "Europe/Sarajevo")
+                ?? TimeZone(identifier: "Europe/Sarajevo")
+        else { return time }
+
+        let parser = DateFormatter()
+        parser.dateFormat = "yyyy-MM-dd HH:mm"
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.timeZone = sourceTZ
+        guard let date = parser.date(from: "\(isoDate) \(cleanTime)") else { return time }
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone.current
+        return formatter.string(from: date)
+    }
+}
+
+extension NamaskaVremena {
+    func converted(from sourceTimezone: String?, on isoDate: String) -> NamaskaVremena {
+        NamaskaVremena(
+            zora: APITimeConverter.convert(zora, from: sourceTimezone, on: isoDate),
+            izlazak: APITimeConverter.convert(izlazak, from: sourceTimezone, on: isoDate),
+            podne: APITimeConverter.convert(podne, from: sourceTimezone, on: isoDate),
+            ikindija: APITimeConverter.convert(ikindija, from: sourceTimezone, on: isoDate),
+            aksam: APITimeConverter.convert(aksam, from: sourceTimezone, on: isoDate),
+            jacija: APITimeConverter.convert(jacija, from: sourceTimezone, on: isoDate),
+            pola_noci: APITimeConverter.convert(pola_noci, from: sourceTimezone, on: isoDate),
+            zadnja_trecina: APITimeConverter.convert(zadnja_trecina, from: sourceTimezone, on: isoDate)
+        )
+    }
 }
 
 // MARK: - Vaktija.dev Locations API
