@@ -26,8 +26,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
             button.image = NSImage(systemSymbolName: "moon.stars.fill", accessibilityDescription: "Prayer Times")
-            button.action = #selector(togglePopover)
+            button.action = #selector(handleStatusItemClick)
             button.target = self
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
 
         // Prayer reminder panel
@@ -56,6 +57,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    @objc private func handleStatusItemClick() {
+        guard let button = statusItem.button else { return }
+
+        if NSApp.currentEvent?.type == .rightMouseUp {
+            if popover.isShown { popover.performClose(nil) }
+            showContextMenu(from: button)
+            return
+        }
+
+        togglePopover()
+    }
+
     @objc private func togglePopover() {
         guard let button = statusItem.button else { return }
 
@@ -66,5 +79,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Ensure the popover's window becomes key so it can receive events
             popover.contentViewController?.view.window?.makeKey()
         }
+    }
+
+    private func showContextMenu(from button: NSStatusBarButton) {
+        let lang = UserDefaults.standard.string(forKey: "appLanguage") ?? "bs"
+        let menu = NSMenu()
+        let quitItem = NSMenuItem(title: loc("s.quit", lang), action: #selector(quitApp), keyEquivalent: "q")
+        quitItem.target = self
+        menu.addItem(quitItem)
+
+        statusItem.menu = menu
+        button.performClick(nil)
+        statusItem.menu = nil
+    }
+
+    @objc private func quitApp() {
+        NSApp.terminate(nil)
     }
 }

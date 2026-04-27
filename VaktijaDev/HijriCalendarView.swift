@@ -146,7 +146,7 @@ struct HijriCalendarView: View {
         if let day = calendarVM.selectedDayData {
             VStack(spacing: 0) {
                 HStack {
-                    Text(day.day_name.capitalized)
+                    Text(localizedWeekday(day.day_name, lang: lang))
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.secondary)
                     Spacer()

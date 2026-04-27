@@ -12,9 +12,14 @@ struct PrayerTimesView: View {
     var body: some View {
         Group {
             if showingCityPicker {
-                CityPickerView(selectedCity: $viewModel.selectedCity) {
+                CityPickerView(selectedCity: $viewModel.selectedCity) { didSelect in
                     showingCityPicker = false
-                    Task { await viewModel.fetchPrayerTimes() }
+                    guard didSelect else { return }
+                    if viewModel.useLocation {
+                        viewModel.useLocation = false
+                    } else {
+                        Task { await viewModel.fetchPrayerTimes() }
+                    }
                 }
             } else {
                 mainView
@@ -85,30 +90,27 @@ struct PrayerTimesView: View {
     private var header: some View {
         VStack(spacing: 6) {
             HStack {
-                if viewModel.useLocation {
+                Button {
+                    showingCityPicker = true
+                } label: {
                     HStack(spacing: 4) {
-                        Image(systemName: "location.fill")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                        Text(viewModel.locationManager.locationName ?? loc("location.mine", lang))
-                            .font(.system(size: 13, weight: .medium))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                } else {
-                    Button {
-                        showingCityPicker = true
-                    } label: {
-                        HStack(spacing: 4) {
+                        if viewModel.useLocation {
+                            Image(systemName: "location.fill")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                            Text(viewModel.locationManager.locationName ?? loc("location.mine", lang))
+                                .font(.system(size: 13, weight: .medium))
+                        } else {
                             Text(viewModel.selectedCity.name)
                                 .font(.system(size: 13, weight: .medium))
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundStyle(.secondary)
                         }
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(.secondary)
                     }
-                    .buttonStyle(.borderless)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .buttonStyle(.borderless)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 Button {
                     viewModel.useLocation.toggle()

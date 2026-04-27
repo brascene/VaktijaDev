@@ -50,7 +50,7 @@ enum ReminderMessages {
             "de": "Beginne deinen Morgen mit dem Gebet, bevor der Tag die Kontrolle über dich übernimmt.",
         ]),
         ReminderMessage([
-            "bs": "Uzmi abdest – hladna voda ujutro čisti i tijelo i um. Sabah ti čeka.",
+            "bs": "Uzmi abdest – hladna voda ujutro čisti i tijelo i um. Sabah te čeka.",
             "en": "Make wudu – cool water in the morning cleanses both body and mind. Fajr awaits.",
             "de": "Vollziehe Wudu – kühles Wasser am Morgen reinigt Körper und Geist. Das Fajr-Gebet wartet auf dich.",
         ]),
@@ -379,7 +379,7 @@ private struct PrayerReminderContent: View {
                             .symbolRenderingMode(.hierarchical)
                     }
                     .buttonStyle(.plain)
-                    .help("Zatvori")
+                    .help(loc("btn.close", currentLang()))
                 }
 
                 Divider()

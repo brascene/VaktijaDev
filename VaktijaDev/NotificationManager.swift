@@ -41,18 +41,19 @@ final class NotificationManager {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: enabledPrayers.map { "prayer_\($0)" })
 
-        let prayers: [(String, String, String)] = [
-            ("fajr",    timings.fajr,    "Zora"),
-            ("dhuhr",   timings.dhuhr,   "Podne"),
-            ("asr",     timings.asr,     "Ikindija"),
-            ("maghrib", timings.maghrib, "Akšam"),
-            ("isha",    timings.isha,    "Jacija"),
+        let lang = currentLang()
+        let prayers: [(String, String)] = [
+            ("fajr",    timings.fajr),
+            ("dhuhr",   timings.dhuhr),
+            ("asr",     timings.asr),
+            ("maghrib", timings.maghrib),
+            ("isha",    timings.isha),
         ]
 
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
 
-        for (key, timeStr, name) in prayers {
+        for (key, timeStr) in prayers {
             guard enabledPrayers.contains(key) else { continue }
             let cleanTime = timeStr.components(separatedBy: " ").first ?? timeStr
             guard let prayerTime = formatter.date(from: cleanTime) else { continue }
@@ -66,9 +67,12 @@ final class NotificationManager {
             let notifDate = prayerDate.addingTimeInterval(-Double(minutesBefore) * 60)
             guard notifDate > Date() else { continue }
 
+            let name = loc("prayer.\(key)", lang)
             let content = UNMutableNotificationContent()
-            content.title = minutesBefore == 0 ? name : "\(name) za \(minutesBefore) min"
-            content.body = "Namaz u \(cleanTime)"
+            content.title = minutesBefore == 0
+                ? name
+                : "\(name) \(loc("notif.in", lang)) \(minutesBefore) \(loc("notif.min", lang))"
+            content.body = "\(loc("notif.prayerAt", lang)) \(cleanTime)"
             content.sound = .default
 
             let notifComps = Calendar.current.dateComponents([.hour, .minute], from: notifDate)

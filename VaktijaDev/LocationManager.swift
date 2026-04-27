@@ -12,7 +12,7 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
     var permissionDenied = false
 
     @ObservationIgnored private let manager = CLLocationManager()
-    @ObservationIgnored private var continuation: CheckedContinuation<Void, Never>?
+    @ObservationIgnored private var pendingResult: Result<CLLocation, Error>?
 
     override init() {
         super.init()
@@ -21,87 +21,91 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
     }
 
     func requestLocation() async {
+        guard !isLocating else { return }
         isLocating = true
+        defer { isLocating = false }
+
         error = nil
         permissionDenied = false
         latitude = nil
         longitude = nil
         locationName = nil
+        pendingResult = nil
 
         let status = manager.authorizationStatus
 
         if status == .denied || status == .restricted {
             permissionDenied = true
-            error = "Lokacija nije dozvoljena"
-            isLocating = false
+            error = loc("location.denied", currentLang())
             return
         }
 
         if status == .notDetermined {
             manager.requestWhenInUseAuthorization()
-            // Wait for authorization response
-            await Task.sleep(seconds: 0.5)
+            for _ in 0..<100 {
+                try? await Task.sleep(nanoseconds: 100_000_000)
+                if manager.authorizationStatus != .notDetermined { break }
+            }
             let newStatus = manager.authorizationStatus
             if newStatus == .denied || newStatus == .restricted {
                 permissionDenied = true
-                error = "Lokacija nije dozvoljena"
-                isLocating = false
+                error = loc("location.denied", currentLang())
+                return
+            }
+            if newStatus == .notDetermined {
+                error = loc("location.unknown", currentLang())
                 return
             }
         }
 
-        // Request location with timeout
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { @MainActor in
-                await withCheckedContinuation { @MainActor continuation in
-                    self.continuation = continuation
-                    self.manager.requestLocation()
-                }
-            }
+        manager.requestLocation()
 
-            group.addTask { @MainActor in
-                await Task.sleep(seconds: 15)
-                if self.continuation != nil {
-                    self.error = "Nije moguće odrediti lokaciju"
-                    self.continuation?.resume()
-                    self.continuation = nil
-                }
-            }
-
-            await group.next()
-            group.cancelAll()
+        // Poll for delegate result (up to 8s)
+        for _ in 0..<80 {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            if pendingResult != nil { break }
         }
 
-        isLocating = false
+        switch pendingResult {
+        case .success(let location):
+            latitude = location.coordinate.latitude
+            longitude = location.coordinate.longitude
+            await reverseGeocode(location)
+        case .failure(let err):
+            if let clError = err as? CLError, clError.code == .denied {
+                permissionDenied = true
+                error = loc("location.denied", currentLang())
+            } else {
+                error = loc("location.unknown", currentLang())
+            }
+        case .none:
+            error = loc("location.unknown", currentLang())
+        }
+        pendingResult = nil
     }
 
     func openLocationSettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices") {
+        let candidates = [
+            "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_LocationServices",
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices",
+        ]
+        for urlString in candidates {
+            if let url = URL(string: urlString), NSWorkspace.shared.open(url) {
+                return
+            }
+        }
+        if let url = URL(string: "x-apple.systempreferences:") {
             NSWorkspace.shared.open(url)
         }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.first else { return }
-
-        latitude = location.coordinate.latitude
-        longitude = location.coordinate.longitude
-        Task {
-            await reverseGeocode(location)
-        }
-        continuation?.resume()
-        continuation = nil
+        pendingResult = .success(location)
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        if let clError = error as? CLError, clError.code == .denied {
-            permissionDenied = true
-            self.error = "Lokacija nije dozvoljena"
-        } else {
-            self.error = "Nije moguće odrediti lokaciju"
-        }
-        continuation?.resume()
-        continuation = nil
+        pendingResult = .failure(error)
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
@@ -111,16 +115,11 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
 
     private func reverseGeocode(_ location: CLLocation) async {
         let geocoder = CLGeocoder()
+        let fallback = loc("location.mine", currentLang())
         if let placemark = try? await geocoder.reverseGeocodeLocation(location).first {
-            locationName = placemark.locality ?? placemark.administrativeArea ?? "Moja lokacija"
+            locationName = placemark.locality ?? placemark.administrativeArea ?? fallback
         } else {
-            locationName = "Moja lokacija"
+            locationName = fallback
         }
-    }
-}
-
-extension Task where Success == Never, Failure == Never {
-    static func sleep(seconds: Double) async {
-        try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
     }
 }
