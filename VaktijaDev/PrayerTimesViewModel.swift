@@ -3,22 +3,59 @@ import SwiftUI
 
 @Observable
 final class PrayerTimesViewModel {
-    var selectedCity: City
+    /// Persisted, so a relaunch (including launch at login) comes back to the
+    /// city the user picked instead of the Konjic default.
+    var selectedCity: City {
+        didSet {
+            if let data = try? JSONEncoder().encode(selectedCity) {
+                UserDefaults.standard.set(data, forKey: Self.selectedCityKey)
+            }
+        }
+    }
     var timings: PrayerTimings?
     var dateInfo: PrayerDateInfo?
     var isLoading = false
     var errorMessage: String?
     var nextPrayer: String?
     var timeUntilNextPrayer: String?
-    var useLocation = false
+    /// Persisted for the same reason. macOS remembers the location permission
+    /// per app, so on relaunch the fix is simply to ask CoreLocation again.
+    var useLocation = false {
+        didSet { UserDefaults.standard.set(useLocation, forKey: Self.useLocationKey) }
+    }
     @ObservationIgnored var locationManager = LocationManager()
 
     @ObservationIgnored private var lastFetchDate: String?
     @ObservationIgnored private var countdownTimer: Timer?
     @ObservationIgnored private var reminderFiredKeys: Set<String> = []
+    @ObservationIgnored private var locationRetryPending = false
+
+    private static let selectedCityKey = "selectedCity"
+    private static let useLocationKey = "useDeviceLocation"
 
     init() {
-        self.selectedCity = CityList.defaultCity
+        if let data = UserDefaults.standard.data(forKey: Self.selectedCityKey),
+           let saved = try? JSONDecoder().decode(City.self, from: data) {
+            self.selectedCity = saved
+        } else {
+            self.selectedCity = CityList.defaultCity
+        }
+        self.useLocation = UserDefaults.standard.bool(forKey: Self.useLocationKey)
+    }
+
+    /// At login the location service and the network are often not ready yet,
+    /// and the popover (whose activation handler retries) may not be opened
+    /// for hours. One delayed retry covers that without any user action.
+    private func scheduleLocationRetry() {
+        guard !locationRetryPending else { return }
+        locationRetryPending = true
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 20_000_000_000)
+            guard let self else { return }
+            self.locationRetryPending = false
+            guard self.useLocation, self.timings == nil else { return }
+            await self.fetchPrayerTimes()
+        }
     }
 
     func fetchPrayerTimes() async {
@@ -35,11 +72,13 @@ final class PrayerTimesViewModel {
             await locationManager.requestLocation()
             if let error = locationManager.error {
                 errorMessage = error
+                if !locationManager.permissionDenied { scheduleLocationRetry() }
                 return
             }
             guard let locLat = locationManager.latitude, let locLon = locationManager.longitude else {
                 let lang = UserDefaults.standard.string(forKey: "appLanguage") ?? "bs"
                 errorMessage = loc("location.unavailable", lang)
+                scheduleLocationRetry()
                 return
             }
             lat = locLat

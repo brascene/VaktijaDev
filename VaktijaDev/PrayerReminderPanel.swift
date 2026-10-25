@@ -58,11 +58,6 @@ enum ReminderMessages {
 
     private static let dhuhr: [ReminderMessage] = [
         ReminderMessage([
-            "bs": "Najavi kolegama kratku molitvenu pauzu – namaz ne traje duže od 5 minuta.",
-            "en": "Let your colleagues know you're taking a brief prayer break – it takes less than 5 minutes.",
-            "de": "Kündige deinen Kollegen eine kurze Gebetspause an – das Gebet dauert nicht länger als 5 Minuten.",
-        ]),
-        ReminderMessage([
             "bs": "Allahov Poslanik ﷺ je klanjao podne odmah po prelasku sunca zenita. Slijedi njegov sunnet.",
             "en": "The Prophet ﷺ prayed Dhuhr immediately when the sun passed its zenith. Follow his sunnah.",
             "de": "Der Gesandte Allahs ﷺ betete Dhuhr unmittelbar nachdem die Sonne ihren Zenit überschritten hatte. Folge seiner Sunnah.",
@@ -71,11 +66,6 @@ enum ReminderMessages {
             "bs": "Usred napornog dana, namaz je reset – par minuta tišine za dušu i tijelo.",
             "en": "In the middle of a busy day, prayer is a reset – a few minutes of silence for the soul and body.",
             "de": "Mitten in einem anstrengenden Tag ist das Gebet ein Reset – ein paar Minuten Stille für Seele und Körper.",
-        ]),
-        ReminderMessage([
-            "bs": "Zakon ti garantira pravo na kratku pauzu. Iskoristi je za podne.",
-            "en": "You have a legal right to a short break. Use it for Dhuhr.",
-            "de": "Das Gesetz garantiert dir das Recht auf eine kurze Pause. Nutze sie für das Dhuhr-Gebet.",
         ]),
         ReminderMessage([
             "bs": "Ko bude čuvao pet dnevnih namaza, oni će mu biti svjetlo, dokaz i spas na Sudnjem danu.",
@@ -113,11 +103,6 @@ enum ReminderMessages {
     ]
 
     private static let maghrib: [ReminderMessage] = [
-        ReminderMessage([
-            "bs": "Akšam je jedan od najkraćih namaza – zatvori laptop na par minuta, vrijedi.",
-            "en": "Maghrib is one of the shortest prayers – close your laptop for a few minutes, it's worth it.",
-            "de": "Maghrib ist eines der kürzesten Gebete – klappe den Laptop für ein paar Minuten zu, es lohnt sich.",
-        ]),
         ReminderMessage([
             "bs": "Ko klanja akšam i jaciju u džematu, kao da je stajao u ibadetu cijelu noć.",
             "en": "Whoever prays Maghrib and Isha in congregation is as if he stood in worship all night.",
@@ -393,7 +378,7 @@ private struct PrayerReminderContent: View {
                 if let source = message.source {
                     HStack {
                         Spacer()
-                        Text("— \(source)")
+                        Text("(\(source))")
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
                             .italic()
